@@ -8,7 +8,7 @@ test: dependencies
 		--headless \
 		--noplugin \
 		-u specs/spec.lua \
-		-c "PlenaryBustedDirectory specs/features {minimal_init = 'specs/spec.lua'}"
+		-c "PlenaryBustedDirectory specs/ {minimal_init = 'specs/spec.lua'}"
 
 luacheck:
 	luacheck .
