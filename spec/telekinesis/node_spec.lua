@@ -53,5 +53,41 @@ describe("#render_label", function()
   end)
 end)
 
-describe("#content", function()
+describe("#select", function()
+  it("sets the visual registers", function()
+    local bufnr = t.setup_buffer(
+      [[
+        local function hello(arg)
+          print('Hello, world!')
+        end
+      ]],
+      "lua"
+    )
+    local captures = { "function.inner" }
+    local node = Node.find_all(captures, { bufnr = bufnr }):first()
+
+    node:select()
+
+    assert.same({ 0, 2, 11, 0 }, vim.fn.getpos("'<"))
+    assert.same({ 0, 2, 33, 0 }, vim.fn.getpos("'>"))
+  end)
+end)
+
+describe("#jump_to", function()
+  it("sets the cursor to the start of the node", function()
+    local bufnr = t.setup_buffer(
+      [[
+        local function hello(arg)
+          print('Hello, world!')
+        end
+      ]],
+      "lua"
+    )
+    local captures = { "function.inner" }
+    local node = Node.find_all(captures, { bufnr = bufnr }):first()
+
+    node:jump_to()
+
+    assert.same({ 2, 11 }, vim.api.nvim_win_get_cursor(0))
+  end)
 end)

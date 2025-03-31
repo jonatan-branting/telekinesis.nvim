@@ -66,4 +66,17 @@ function Node:content()
   return vim.api.nvim_buf_get_text(self.bufnr, start_row, start_col, end_row, end_col, {})
 end
 
+function Node:select()
+  logger:debug("Node:select()")
+
+  vim.fn.setpos("'<", { self.bufnr, self.start_row + 1, self.start_col + 1, 0 })
+  vim.fn.setpos("'>", { self.bufnr, self.end_row + 1, self.end_col + 1, 0 })
+end
+
+function Node:jump_to()
+  logger:debug("Node:jump_to()")
+
+  vim.api.nvim_win_set_cursor(0, { self.start_row + 1, self.start_col + 1 })
+end
+
 return Node
