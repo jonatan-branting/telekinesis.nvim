@@ -32,7 +32,7 @@ end
 vim.keymap.set("o", "n", "<Plug>(telekinesis-node)")
 
 function Telekinesis.setup()
-  Telekinesis.logger():debug("Telekinesis.setup()")
+  Telekinesis.logger():debug("Telekinesis.setup")
 
   require("telekinesis.treesitter.query").add_directives()
 end

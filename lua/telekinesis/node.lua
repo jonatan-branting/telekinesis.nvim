@@ -22,11 +22,18 @@ end
 function Node:new(opts)
   local instance = {
     name = opts.name,
-    ts_node = opts.ts_node, -- this is optional, but a reference is nice?
+    ts_node = opts.ts_node,
     bufnr = opts.bufnr or 0,
     range = opts.range,
-    label = nil,
+    ns_id = vim.api.nvim_create_namespace("TelekinesisNode")
   }
+
+  local start_row, start_col, end_row, end_col = unpack(instance.range)
+
+  instance.start_row = start_row
+  instance.start_col = start_col
+  instance.end_row = end_row
+  instance.end_col = end_col
 
   setmetatable(instance, self)
   self.__index = self
@@ -35,13 +42,20 @@ function Node:new(opts)
 end
 
 -- Renders the node based on its label using extmarks
-function Node:render()
-  vim.api.nvim_buf_set_extmark(0, 0, self.line, self.column, {
-    virt_text = { { self.label, "TelekinesisLabel" } },
+function Node:render_label(label)
+  local opts = {
+    virt_text = { { label, "TelekinesisLabel" } },
     virt_text_pos = "overlay",
     hl_mode = "combine",
-    id = self.id,
-  })
+  }
+
+  if self.id then
+    opts.id = self.id
+  end
+
+  self.id = vim.api.nvim_buf_set_extmark(self.bufnr, self.ns_id, self.start_row, self.start_col, opts)
+
+  return self.id
 end
 
 function Node:content()

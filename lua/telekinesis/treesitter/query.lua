@@ -4,7 +4,9 @@ local Query = {}
 local logger = require("telekinesis"):logger()
 
 function Query.add_directives()
-  logger:debug("Query.add_directives()")
+  -- TODO: We need to allow this to override the directive if it's already there!
+  -- Might be a flag?
+  logger:debug("Query.add_directives")
 
   vim.treesitter.query.add_directive(
     "make-range!",
@@ -21,12 +23,12 @@ function Query.add_directives()
       metadata.directive = "make-range!"
       metadata.capture_name = capture_name
 
-      -- How can you shut up this warning?
+      -- How can you shut up this lint warning?
       metadata.from = from_node
       metadata.to = to_node
       metadata.range = { from_node:start(), to_node:end_() }
 
-      logger:debug("make-range! metadata:", vim.inspect(metadata))
+      logger:debug("Query.make-range! metadata:", vim.inspect(metadata))
     end,
     {}
   )
@@ -76,7 +78,7 @@ function Query:nodes()
           range = { start_row, start_col, end_row, end_col },
         })
 
-        logger:debug("Query:nodes() node:", vim.inspect(node))
+        logger:debug("Query:nodes node:", vim.inspect(node))
 
         table.insert(nodes, node)
       end
