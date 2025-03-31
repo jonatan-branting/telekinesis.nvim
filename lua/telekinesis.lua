@@ -2,6 +2,12 @@ local Logger = require("telekinesis.lib.logger")
 
 local Telekinesis = {}
 
+function Telekinesis.instance()
+  assert(_G.telekinesis_instance, "Telekinesis has not been setup")
+
+  return _G.telekinesis_instance
+end
+
 function Telekinesis.logger()
   return Logger:new(
     {
@@ -10,31 +16,32 @@ function Telekinesis.logger()
   )
 end
 
--- Remote operator pendings
--- cia => change in argument
--- <c>ira => change in remote argument
--- Usage: vim.keymap.set { "o", "ra", "<Plug>(telekinesis-argument)" }
-function Telekinesis:operator_pending(query)
-  Node.find_all(query):each({
-    type = node_type,
-    action = vim.go.operatorfunc,
-  })
-end
-
--- Occurence operator pendings
--- coif => change occurrences in function
-
--- Current node operator pendings
--- cne => chance node end
--- cnw => chance node until next
--- cnb => change node back
-
-vim.keymap.set("o", "n", "<Plug>(telekinesis-node)")
-
-function Telekinesis.setup()
+function Telekinesis.setup(opts)
   Telekinesis.logger():debug("Telekinesis.setup")
 
+  opts = vim.tbl_extend(
+    "force",
+    require("telekinesis.config").default_opts,
+    opts or {}
+  )
+
+  _G.telekinesis_instance = Telekinesis:new(opts)
+
+  return _G.telekinesis_instance
+end
+
+function Telekinesis:new(opts)
+  local instance = {
+    opts = opts,
+    logger = Telekinesis.logger(),
+  }
+
+  setmetatable(instance, self)
+  self.__index = self
+
   require("telekinesis.treesitter.query").add_directives()
+
+  return instance
 end
 
 return Telekinesis
