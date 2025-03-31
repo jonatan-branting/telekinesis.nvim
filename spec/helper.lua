@@ -7,10 +7,15 @@ function M.feed(text, feed_opts)
   vim.api.nvim_feedkeys(to_feed, feed_opts, false)
 end
 
-function M.setup_buffer(input, filetype)
+function M.setup_buffer(str, filetype)
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_option(buf, "filetype", filetype)
   vim.api.nvim_command("buffer " .. buf)
+
+  local input = {}
+  for line in string.gmatch(str, "[^\r\n]+") do
+    table.insert(input, line)
+  end
 
   vim.api.nvim_buf_set_lines(0, 0, -1, true, input)
 

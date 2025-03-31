@@ -66,12 +66,17 @@ function Query:nodes()
       local name = self.query.captures[id]
 
       for _, ts_node in ipairs(ts_nodes) do
+        local start_row, start_col, _ = ts_node:start()
+        local end_row, end_col, _ = ts_node:end_()
+
         local node = Node:new({
           ts_node = ts_node,
           bufnr = self.bufnr,
           name = name,
-          range = { ts_node:start(), ts_node:end_() }
+          range = { start_row, start_col, end_row, end_col },
         })
+
+        logger:debug("Query:nodes() node:", vim.inspect(node))
 
         table.insert(nodes, node)
       end

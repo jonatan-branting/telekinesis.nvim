@@ -20,13 +20,7 @@ function Enumerable:length()
 end
 
 function Enumerable:contains(item)
-  for _, i in ipairs(self.items) do
-    if i == item then
-      return true
-    end
-  end
-
-  return false
+  return vim.tbl_contains(self.items, item)
 end
 
 function Enumerable:any(func)

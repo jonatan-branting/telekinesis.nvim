@@ -1,4 +1,3 @@
-local Node = require("telekinesis.node")
 local Logger = require("telekinesis.lib.logger")
 
 local Telekinesis = {}

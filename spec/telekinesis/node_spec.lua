@@ -2,20 +2,29 @@ local t = require("../helper")
 
 local Node = require("telekinesis.node")
 
-describe("query", function()
+describe(".find_all", function()
   it("returns all nodes matching a given query", function()
     local bufnr = t.setup_buffer(
-      {
-        "local function hello(arg)",
-        },
+      [[
+        local function hello(arg)
+          print('Hello, world!')
+        end
+      ]],
       "lua"
     )
-    local query_string = "function"
-    -- print(vim.inspect(require("vim.treesitter.query").get("lua", "textobjects")))
+    local captures = { "function.inner" }
+    local result = Node.find_all(captures, { bufnr = bufnr })
 
-    local result = Node.find_all({"function"}, { bufnr = bufnr })
-
-    -- assert.same(1, result:length())
-    -- assert.same({"(arg)"}, result:map("content"):table())
+    assert.same(1, result:length())
+    assert.same("function.inner", result:first().name)
+    assert.same(
+      {
+        [[print('Hello, world!')]]
+      },
+      result:first():content()
+    )
   end)
+end)
+
+describe(".content", function()
 end)

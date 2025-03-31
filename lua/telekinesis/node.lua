@@ -1,3 +1,6 @@
+local Enumerable = require("telekinesis.lib.enumerable")
+local logger = require("telekinesis"):logger()
+
 local Node = {}
 
 function Node.find_all(captures, opts)
@@ -5,23 +8,15 @@ function Node.find_all(captures, opts)
   local bufnr = opts.bufnr or 0
 
   return Query
-    :new({ captures = captures, bufnr = bufnr })
-    :foreach_node(function(ts_node)
-      return Node:new({ts_node = ts_node, bufnr = bufnr})
-    end)
-end
+    :new({ bufnr = bufnr })
+    :nodes()
+    :filter(function(node)
+      for _, capture in ipairs(captures) do
+        if node.name:sub(1, #capture) == capture then return true end
+      end
 
--- might just remove this
-function Node.from_ts_node(ts_node, opts)
-  return Node:new({
-    name = opts.name,
-    ts_node = ts_node,
-    range = {
-      ts_node:start(),
-      ts_node:_end()
-    },
-    bufnr = opts.bufnr
-  })
+      return false
+    end)
 end
 
 function Node:new(opts)
@@ -51,6 +46,8 @@ end
 
 function Node:content()
   local start_row, start_col, end_row, end_col = unpack(self.range)
+
+  logger:debug("Node:content() range:", start_row, start_col, end_row, end_col)
 
   return vim.api.nvim_buf_get_text(self.bufnr, start_row, start_col, end_row, end_col, {})
 end
