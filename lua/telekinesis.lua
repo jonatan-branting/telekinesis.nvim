@@ -3,6 +3,14 @@ local Logger = require("telekinesis.lib.logger")
 
 local Telekinesis = {}
 
+function Telekinesis.logger()
+  return Logger:new(
+    {
+      level = vim.env.telekinesis_LOG_LEVEL or "debug"
+    }
+  )
+end
+
 -- Remote operator pendings
 -- cia => change in argument
 -- <c>ira => change in remote argument
@@ -24,12 +32,10 @@ end
 
 vim.keymap.set("o", "n", "<Plug>(telekinesis-node)")
 
-function Telekinesis.logger()
-  return Logger:new(
-    {
-      level = vim.env.telekinesis_LOG_LEVEL or "debug"
-    }
-  )
+function Telekinesis.setup()
+  Telekinesis.logger():debug("Telekinesis.setup()")
+
+  require("telekinesis.treesitter.query").add_directives()
 end
 
 return Telekinesis

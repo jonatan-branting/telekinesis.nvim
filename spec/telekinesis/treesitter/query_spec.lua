@@ -1,4 +1,3 @@
-require("spec")
 local t = require("../helper")
 
 local Query = require("telekinesis.treesitter.query")

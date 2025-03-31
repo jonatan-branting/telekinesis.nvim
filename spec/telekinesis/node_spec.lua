@@ -1,4 +1,3 @@
-require("spec")
 local t = require("../helper")
 
 local Node = require("telekinesis.node")

@@ -48,7 +48,6 @@ function Query:new(opts)
   self.__index = self
 
   -- This shouldn't be added if it's already there!
-  Query.add_directives()
 
   return instance
 end
