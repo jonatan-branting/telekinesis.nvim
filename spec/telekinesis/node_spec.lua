@@ -42,7 +42,6 @@ describe("#render_label", function()
     local extmark_id = node:render_label("test")
     local extmark = vim.api.nvim_buf_get_extmark_by_id(bufnr, node.ns_id, extmark_id, { details = true })
 
-    print(vim.inspect(extmark))
     assert.same(node.start_row, extmark[1])
     assert.same(node.start_col, extmark[2])
 
