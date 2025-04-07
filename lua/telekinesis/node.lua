@@ -4,6 +4,10 @@ local logger = require("telekinesis"):logger()
 local Node = {}
 
 function Node.find_all(captures, opts)
+  if type(captures) == "string" then
+    captures = { captures }
+  end
+
   local Query = require("telekinesis.treesitter.query")
   local bufnr = opts.bufnr or 0
 
@@ -43,6 +47,7 @@ end
 
 -- Renders the node based on its label using extmarks
 function Node:render_label(label)
+  -- TODO: Should also render the entire node!
   local opts = {
     virt_text = { { label, "TelekinesisLabel" } },
     virt_text_pos = "overlay",
@@ -58,6 +63,16 @@ function Node:render_label(label)
   return self.id
 end
 
+function Node:clear()
+  logger:debug("Node:clear()")
+
+  if self.id then
+    vim.api.nvim_buf_del_extmark(self.bufnr, self.ns_id, self.id)
+
+    self.id = nil
+  end
+end
+
 function Node:content()
   local start_row, start_col, end_row, end_col = unpack(self.range)
 
@@ -70,7 +85,9 @@ function Node:select()
   logger:debug("Node:select()")
 
   vim.fn.setpos("'<", { self.bufnr, self.start_row + 1, self.start_col + 1, 0 })
-  vim.fn.setpos("'>", { self.bufnr, self.end_row + 1, self.end_col + 1, 0 })
+  vim.fn.setpos("'>", { self.bufnr, self.end_row + 1, self.end_col, 0 })
+
+  vim.cmd("normal! gv")
 end
 
 function Node:jump_to()

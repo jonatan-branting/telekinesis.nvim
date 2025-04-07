@@ -11,7 +11,7 @@ end
 function Telekinesis.logger()
   return Logger:new(
     {
-      level = vim.env.telekinesis_LOG_LEVEL or "debug"
+      level = vim.env.telekinesis_LOG_LEVEL or "error",
     }
   )
 end
@@ -27,12 +27,14 @@ function Telekinesis.setup(opts)
 
   _G.telekinesis_instance = Telekinesis:new(opts)
 
+  vim.cmd([[hi! link TelekinesisLabel Cursor]])
+
   return _G.telekinesis_instance
 end
 
 function Telekinesis:new(opts)
   local instance = {
-    opts = opts,
+    config = opts,
     logger = Telekinesis.logger(),
   }
 
@@ -42,6 +44,35 @@ function Telekinesis:new(opts)
   require("telekinesis.treesitter.query").add_directives()
 
   return instance
+end
+
+function Telekinesis:select(captures)
+  local Node = require("telekinesis.node")
+  local Picker = require("telekinesis.picker")
+
+  local nodes = Node.find_all(captures, { bufnr = 0 })
+
+  Picker
+    :new(nodes)
+    :render_labels(function(node)
+      node:select()
+    end)
+end
+
+function Telekinesis:await_select_inner()
+  local mapping = {
+    ["f"] = "function.inner"
+  }
+
+  local picked_char = vim.fn.getcharstr()
+  local picked_node = mapping[picked_char]
+
+  if picked_node == nil then
+    self.logger:warn("No mapping for " .. picked_char)
+    return
+  end
+
+  self:select({ picked_node })
 end
 
 return Telekinesis

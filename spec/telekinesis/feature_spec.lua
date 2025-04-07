@@ -2,7 +2,7 @@ local t = require("../test_utils")
 
 local Telekinesis = require("telekinesis")
 
-vim.keymap.set("o", "irf", function() require("telekinesis").instance():select("function.inner") end, {})
+vim.keymap.set("o", "ir", function() require("telekinesis").instance():select_inner() end, {})
 
 describe("feature", function()
   it("can use a text object with an action", function()

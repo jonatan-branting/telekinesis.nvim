@@ -30,7 +30,9 @@ function Query.add_directives()
 
       logger:debug("Query.make-range! metadata:", vim.inspect(metadata))
     end,
-    {}
+    {
+      force = true
+    }
   )
 end
 
@@ -72,8 +74,8 @@ function Query:nodes()
         local end_row, end_col, _ = ts_node:end_()
 
         local node = Node:new({
-          ts_node = ts_node,
           bufnr = self.bufnr,
+          ts_node = ts_node,
           name = name,
           range = { start_row, start_col, end_row, end_col },
         })
@@ -87,6 +89,5 @@ function Query:nodes()
 
   return Enumerable:new(nodes)
 end
-
 
 return Query
