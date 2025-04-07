@@ -1,4 +1,4 @@
-local t = require("../helper")
+local t = require("../test_utils")
 
 local Node = require("telekinesis.node")
 
@@ -67,8 +67,8 @@ describe("#select", function()
 
     node:select()
 
-    assert.same({ 0, 2, 11, 0 }, vim.fn.getpos("'<"))
-    assert.same({ 0, 2, 33, 0 }, vim.fn.getpos("'>"))
+    assert.same({ 0, 3, 3, 0 }, vim.fn.getpos("'<"))
+    assert.same({ 0, 3, 24, 0 }, vim.fn.getpos("'>"))
   end)
 end)
 
@@ -87,6 +87,6 @@ describe("#jump_to", function()
 
     node:jump_to()
 
-    assert.same({ 2, 11 }, vim.api.nvim_win_get_cursor(0))
+    assert.same({ 3, 3 }, vim.api.nvim_win_get_cursor(0))
   end)
 end)
