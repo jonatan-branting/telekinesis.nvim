@@ -23,6 +23,8 @@ function Picker:render_labels(callback)
     node:render_label(labels[i])
   end)
 
+  vim.cmd("redraw")
+
   local label = vim.fn.getcharstr()
 
   if node_label_pairs[label] ~= nil then

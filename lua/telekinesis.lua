@@ -1,4 +1,5 @@
 local Logger = require("telekinesis.lib.logger")
+local utils = require("telekinesis.lib.utils")
 
 local Telekinesis = {}
 
@@ -61,7 +62,9 @@ end
 
 function Telekinesis:await_select_inner()
   local mapping = {
-    ["f"] = "function.inner"
+    ["f"] = "function.inner",
+    ["c"] = "class.inner",
+    ["b"] = "block.inner",
   }
 
   local picked_char = vim.fn.getcharstr()
@@ -69,7 +72,10 @@ function Telekinesis:await_select_inner()
 
   if picked_node == nil then
     self.logger:warn("No mapping for " .. picked_char)
-    return
+
+    utils.abort_operation()
+
+    return ""
   end
 
   self:select({ picked_node })

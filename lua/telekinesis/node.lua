@@ -51,7 +51,6 @@ function Node:render_label(label)
   local opts = {
     virt_text = { { label, "TelekinesisLabel" } },
     virt_text_pos = "overlay",
-    hl_mode = "combine",
   }
 
   if self.id then
