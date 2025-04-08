@@ -69,7 +69,7 @@ function Node:render_label(label)
   -- TODO: Should also render the entire node!
   local opts = {
     virt_text = { { label, "TelekinesisLabel" } },
-    virt_text_pos = "overlay",
+    virt_text_pos = "inline",
   }
 
   if self.id then
