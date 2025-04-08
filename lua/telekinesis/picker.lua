@@ -12,16 +12,20 @@ function Picker:new(nodes)
   return instance
 end
 
-function Picker:render_labels(callback)
+function Picker:render_labels(opts)
+  local callback = opts.callback or function() end
+  local on_nothing_selected = opts.on_nothing_selected or function() end
+
   local labels = self.config.labels
 
   local node_label_pairs = {}
 
-  self.nodes:each(function(node, i)
-    node_label_pairs[labels[i]] = node
+  self.nodes
+    :each(function(node, i)
+      node_label_pairs[labels[i]] = node
 
-    node:render_label(labels[i])
-  end)
+      node:render_label(labels[i])
+    end)
 
   vim.cmd("redraw")
 
@@ -29,6 +33,8 @@ function Picker:render_labels(callback)
 
   if node_label_pairs[label] ~= nil then
     callback(node_label_pairs[label])
+  else
+    on_nothing_selected()
   end
 
   self.nodes:each(function(node)

@@ -51,16 +51,24 @@ function Telekinesis:select(captures)
   local Node = require("telekinesis.node")
   local Picker = require("telekinesis.picker")
 
-  local nodes = Node.find_all(captures, { bufnr = 0 })
+  local nodes = Node.find_all_visible(captures, { winid = 0 })
 
   Picker
     :new(nodes)
-    :render_labels(function(node)
-      node:select()
-    end)
+    :render_labels(
+      {
+        callback = function(node)
+          node:select()
+        end,
+        on_nothing_selected = function()
+          utils.abort_operation()
+        end
+      }
+    )
 end
 
 function Telekinesis:await_select_inner()
+  -- Should come from config in the future
   local mapping = {
     ["f"] = "function.inner",
     ["c"] = "class.inner",
@@ -73,9 +81,10 @@ function Telekinesis:await_select_inner()
   if picked_node == nil then
     self.logger:warn("No mapping for " .. picked_char)
 
+    -- doesn't seem to work!
     utils.abort_operation()
 
-    return ""
+    return
   end
 
   self:select({ picked_node })
