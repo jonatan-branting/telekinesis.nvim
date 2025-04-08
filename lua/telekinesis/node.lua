@@ -105,7 +105,9 @@ function Node:select()
   vim.fn.setpos("'<", { self.bufnr, self.start_row + 1, self.start_col + 1, 0 })
   vim.fn.setpos("'>", { self.bufnr, self.end_row + 1, self.end_col, 0 })
 
-  vim.cmd("normal! gv")
+  -- `o` to set the cursor to the start of the selection, as this likely keeps
+  -- the viewport more stable in most cases
+  vim.cmd("normal! gvo")
 end
 
 function Node:jump_to()
