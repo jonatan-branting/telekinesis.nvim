@@ -23,6 +23,25 @@ function Node.find_all(captures, opts)
     end)
 end
 
+function Node.find_all_visible(captures, opts)
+  local winid = opts.winid or 0
+  local bufnr = vim.api.nvim_win_get_buf(winid)
+  local nodes = Node.find_all(captures, { bufnr = bufnr })
+
+  local topline, botline
+  vim.api.nvim_win_call(winid, function()
+    topline = vim.fn.line("w0")
+    botline = vim.fn.line("w$")
+  end)
+
+  return nodes
+    :filter(function(node)
+      local start_row, _, end_row, _ = unpack(node.range)
+
+      return start_row >= topline and end_row <= botline
+    end)
+end
+
 function Node:new(opts)
   local instance = {
     name = opts.name,
