@@ -81,7 +81,28 @@ function Telekinesis:await_select_inner()
   if picked_node == nil then
     self.logger:warn("No mapping for " .. picked_char)
 
-    -- doesn't seem to work!
+    utils.abort_operation()
+
+    return
+  end
+
+  self:select({ picked_node })
+end
+
+function Telekinesis:await_select_outer()
+  -- Should come from config in the future
+  local mapping = {
+    ["f"] = "function.outer",
+    ["c"] = "class.outer",
+    ["b"] = "block.outer",
+  }
+
+  local picked_char = vim.fn.getcharstr()
+  local picked_node = mapping[picked_char]
+
+  if picked_node == nil then
+    self.logger:warn("No mapping for " .. picked_char)
+
     utils.abort_operation()
 
     return
