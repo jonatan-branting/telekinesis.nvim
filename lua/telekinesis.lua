@@ -73,6 +73,7 @@ function Telekinesis:await_select_inner()
     ["f"] = "function.inner",
     ["c"] = "class.inner",
     ["b"] = "block.inner",
+    ["a"] = "parameter.inner",
   }
 
   local picked_char = vim.fn.getcharstr()
@@ -95,6 +96,7 @@ function Telekinesis:await_select_outer()
     ["f"] = "function.outer",
     ["c"] = "class.outer",
     ["b"] = "block.outer",
+    ["a"] = "parameter.outer",
   }
 
   local picked_char = vim.fn.getcharstr()
