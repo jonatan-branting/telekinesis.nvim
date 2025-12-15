@@ -77,6 +77,35 @@ function Telekinesis:select(capture_groups)
     )
 end
 
+function Telekinesis:goto(capture_groups)
+  local Node = require("telekinesis.node")
+  local Picker = require("telekinesis.picker")
+
+  local nodes = {}
+  for key, captures in pairs(capture_groups) do
+    Node
+      .find_all_visible(captures, { winid = 0 })
+      :each(function(node)
+        node.label_prefix = key
+
+        table.insert(nodes, node)
+      end)
+  end
+
+  Picker
+    :new(Enumerable:new(nodes))
+    :render_labels(
+      {
+        callback = function(node)
+          node:goto()
+        end,
+        on_nothing_selected = function()
+          utils.abort_operation()
+        end
+      }
+    )
+end
+
 function Telekinesis:await_select_inner()
   -- Should come from config in the future
   local mapping = {
@@ -85,17 +114,6 @@ function Telekinesis:await_select_inner()
     ["b"] = "block.inner",
     ["a"] = "parameter.inner",
   }
-  --
-  -- local picked_char = vim.fn.getcharstr()
-  -- local picked_node = mapping[picked_char]
-  --
-  -- if picked_node == nil then
-  --   self.logger:warn("No mapping for " .. picked_char)
-  --
-  --   utils.abort_operation()
-  --
-  --   return
-  -- end
 
   self:select(mapping)
 end
@@ -109,18 +127,17 @@ function Telekinesis:await_select_outer()
     ["a"] = "parameter.outer",
   }
 
-  local picked_char = vim.fn.getcharstr()
-  local picked_node = mapping[picked_char]
+  self:select(mapping)
+end
 
-  if picked_node == nil then
-    self.logger:warn("No mapping for " .. picked_char)
-
-    utils.abort_operation()
-
-    return
-  end
-
-  self:select({ picked_node })
+function Telekinesis:await_goto_remote()
+  local mapping = {
+    ["f"] = "function.outer",
+    ["c"] = "class.outer",
+    ["b"] = "block.outer",
+    ["a"] = "parameter.inner",
+  }
+  self:goto(mapping)
 end
 
 return Telekinesis
