@@ -1,11 +1,9 @@
 local Utils = {}
 
 function Utils.abort_operation()
-  local text = "<Esc><Esc>"
-  local feed_opts = "mtx"
-  local to_feed = vim.api.nvim_replace_termcodes(text, true, false, true)
+  local keys = vim.api.nvim_replace_termcodes("<Esc>", true, false, true)
 
-  vim.api.nvim_feedkeys(to_feed, feed_opts, false)
+  vim.api.nvim_feedkeys(keys, "n", false)
 end
 
 return Utils
