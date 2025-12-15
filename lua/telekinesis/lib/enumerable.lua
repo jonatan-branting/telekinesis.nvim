@@ -223,4 +223,12 @@ function Enumerable:_items()
   return self.items
 end
 
+function Enumerable:sort(func)
+  table.sort(self.items, function(a, b)
+    return func(a) < func(b)
+  end)
+
+  return self
+end
+
 return Enumerable

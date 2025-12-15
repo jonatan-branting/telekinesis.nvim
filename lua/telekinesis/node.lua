@@ -95,6 +95,40 @@ function Node:clear()
   end
 end
 
+function Node:distance_to_cursor()
+  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+  local cursor_row = cursor_pos[1] - 1
+  local cursor_col = cursor_pos[2]
+
+  local start_row, start_col, end_row, end_col = unpack(self.range)
+
+  local row_distance
+  if cursor_row < start_row then
+    row_distance = start_row - cursor_row
+  elseif cursor_row > end_row then
+    row_distance = cursor_row - end_row
+  else
+    row_distance = 0
+  end
+
+  local col_distance
+  if cursor_row < start_row then
+    col_distance = start_col - cursor_col
+  elseif cursor_row > end_row then
+    col_distance = cursor_col - end_col
+  else
+    if cursor_col < start_col then
+      col_distance = start_col - cursor_col
+    elseif cursor_col > end_col then
+      col_distance = cursor_col - end_col
+    else
+      col_distance = 0
+    end
+  end
+
+  return math.sqrt(row_distance ^ 2 + col_distance ^ 2)
+end
+
 function Node:content()
   local start_row, start_col, end_row, end_col = unpack(self.range)
 
@@ -114,10 +148,10 @@ function Node:select()
   vim.cmd("normal! gvo")
 end
 
-function Node:jump_to()
-  logger:debug("Node:jump_to()")
+function Node:goto()
+  logger:debug("Node:goto()")
 
-  vim.api.nvim_win_set_cursor(0, { self.start_row + 1, self.start_col + 1 })
+  vim.api.nvim_win_set_cursor(0, { self.start_row + 1, self.start_col })
 end
 
 return Node

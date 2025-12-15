@@ -23,9 +23,13 @@ function Picker:render_labels(opts)
       return node.label_prefix
     end)
     :each(function(group)
-      group:each(function(node, i)
-        node.label = node.label_prefix .. labels[i]
-      end)
+      group
+        :sort(function(node)
+          return node:distance_to_cursor()
+        end)
+        :each(function(node, i)
+          node.label = node.label_prefix .. labels[i]
+        end)
     end)
 
   local candidates = self.nodes:dup()
@@ -38,7 +42,7 @@ function Picker:render_labels(opts)
 
     vim.cmd("redraw")
 
-    label = label ..vim.fn.getcharstr()
+    label = vim.fn.getcharstr()
 
     local picked = candidates:find(function(node)
       return node.label == label
@@ -63,6 +67,10 @@ function Picker:render_labels(opts)
 
       break
     end
+
+    candidates:each(function(node)
+      node.label = node.label:sub(#label + 1)
+    end)
   end
 end
 
