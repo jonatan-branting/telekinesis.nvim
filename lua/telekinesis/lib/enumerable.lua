@@ -1,8 +1,16 @@
+local Maybe = require("telekinesis.lib.maybe")
+
 local Enumerable = {}
+
+setmetatable(Enumerable, {
+  __call = function(self, ...)
+    return self:new(...)
+  end,
+})
 
 function Enumerable:new(items)
   local instance = {
-    items = items,
+    items = items or {},
   }
 
   setmetatable(instance, self)
@@ -15,12 +23,46 @@ function Enumerable:append(item)
   table.insert(self.items, item)
 end
 
+function Enumerable:insert(item)
+  table.insert(self.items, item)
+end
+
 function Enumerable:length()
   return #self.items
 end
 
 function Enumerable:contains(item)
-  return vim.tbl_contains(self.items, item)
+  for _, i in pairs(self.items) do
+    if i == item then
+      return true
+    end
+  end
+
+  return false
+end
+
+function Enumerable:excludes(item)
+  for _, i in pairs(self.items) do
+    if i == item then
+      return false
+    end
+  end
+
+  return true
+end
+
+function Enumerable:partition(func)
+  local a = {}
+  local b = {}
+  for _, item in pairs(self.items) do
+    if func(item) then
+      table.insert(a, item)
+    else
+      table.insert(b, item)
+    end
+  end
+
+  return a, b
 end
 
 function Enumerable:any(func)
@@ -29,6 +71,36 @@ function Enumerable:any(func)
   end
 
   return self:find(func) ~= nil
+end
+
+function Enumerable:group_by(func)
+  local groups = {}
+
+  for _, item in pairs(self.items) do
+    local key = func(item)
+
+    if not groups[key] then
+      groups[key] = Enumerable:new()
+    end
+
+    groups[key]:append(item)
+  end
+
+  return Enumerable:new(groups)
+end
+
+function Enumerable:dup()
+  local copied_items = {}
+
+  for _, item in pairs(self.items) do
+    table.insert(copied_items, item)
+  end
+
+  return Enumerable:new(copied_items)
+end
+
+function Enumerable:empty()
+  return self:length() == 0
 end
 
 function Enumerable:to_table()
@@ -43,9 +115,11 @@ function Enumerable:each(func_or_func_name)
     func = func_or_func_name
   end
 
-  for i, item in ipairs(self.items) do
+  for i, item in pairs(self.items) do
     func(item, i)
   end
+
+  return self
 end
 
 function Enumerable:map(func_or_func_name)
@@ -58,7 +132,7 @@ function Enumerable:map(func_or_func_name)
     func = func_or_func_name
   end
 
-  for i, item in ipairs(self.items) do
+  for i, item in pairs(self.items) do
     local result, _ = func(item, i)
 
     table.insert(mapped, result)
@@ -70,7 +144,7 @@ end
 function Enumerable:filter(func)
   local filtered = {}
 
-  for _, item in ipairs(self.items) do
+  for _, item in pairs(self.items) do
     if func(item) then
       table.insert(filtered, item)
     end
@@ -86,7 +160,7 @@ end
 function Enumerable:reject(func)
   local filtered = {}
 
-  for _, item in ipairs(self.items) do
+  for _, item in pairs(self.items) do
     if not func(item) then
       table.insert(filtered, item)
     end
@@ -98,7 +172,7 @@ end
 function Enumerable:reduce(func, initial)
   local result = initial
 
-  for _, item in ipairs(self.items) do
+  for _, item in pairs(self.items) do
     result = func(result, item)
   end
 
@@ -106,11 +180,31 @@ function Enumerable:reduce(func, initial)
 end
 
 function Enumerable:find(func)
-  for _, item in ipairs(self.items) do
+  for _, item in pairs(self.items) do
     if func(item) then
       return item
     end
   end
+end
+
+function Enumerable:find_maybe(func)
+  for _, item in pairs(self.items) do
+    if func(item) then
+      return Maybe(item)
+    end
+  end
+
+  return Maybe(nil)
+end
+
+function Enumerable:_then(func)
+  return func(self.items)
+end
+
+function Enumerable:tap(func)
+  func(self.items)
+
+  return self
 end
 
 function Enumerable:last()
@@ -122,6 +216,10 @@ function Enumerable:first()
 end
 
 function Enumerable:table()
+  return self.items
+end
+
+function Enumerable:_items()
   return self.items
 end
 

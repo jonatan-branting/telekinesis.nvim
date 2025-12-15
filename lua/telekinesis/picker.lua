@@ -18,28 +18,52 @@ function Picker:render_labels(opts)
 
   local labels = self.config.labels
 
-  local node_label_pairs = {}
-
   self.nodes
-    :each(function(node, i)
-      node_label_pairs[labels[i]] = node
-
-      node:render_label(labels[i])
+    :group_by(function(node)
+      return node.label_prefix
+    end)
+    :each(function(group)
+      group:each(function(node, i)
+        node.label = node.label_prefix .. labels[i]
+      end)
     end)
 
-  vim.cmd("redraw")
+  local candidates = self.nodes:dup()
+  local label = ""
 
-  local label = vim.fn.getcharstr()
+  while true do
+    candidates:each(function(node)
+      node:render_label()
+    end)
 
-  if node_label_pairs[label] ~= nil then
-    callback(node_label_pairs[label])
-  else
-    on_nothing_selected()
+    vim.cmd("redraw")
+
+    label = label ..vim.fn.getcharstr()
+
+    local picked = candidates:find(function(node)
+      return node.label == label
+    end)
+
+    candidates:each(function(node)
+      node:clear()
+    end)
+
+    if picked then
+      callback(picked)
+
+      break
+    end
+
+    candidates = candidates:filter(function(node)
+      return node.label:sub(1, #label) == label
+    end)
+
+    if candidates:empty() then
+      on_nothing_selected()
+
+      break
+    end
   end
-
-  self.nodes:each(function(node)
-    node:clear()
-  end)
 end
 
 return Picker

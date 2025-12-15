@@ -1,4 +1,5 @@
 local Logger = require("telekinesis.lib.logger")
+local Enumerable = require("telekinesis.lib.enumerable")
 local utils = require("telekinesis.lib.utils")
 
 local Telekinesis = {}
@@ -47,14 +48,23 @@ function Telekinesis:new(opts)
   return instance
 end
 
-function Telekinesis:select(captures)
+function Telekinesis:select(capture_groups)
   local Node = require("telekinesis.node")
   local Picker = require("telekinesis.picker")
 
-  local nodes = Node.find_all_visible(captures, { winid = 0 })
+  local nodes = {}
+  for key, captures in pairs(capture_groups) do
+    Node
+      .find_all_visible(captures, { winid = 0 })
+      :each(function(node)
+        node.label_prefix = key
+
+        table.insert(nodes, node)
+      end)
+  end
 
   Picker
-    :new(nodes)
+    :new(Enumerable:new(nodes))
     :render_labels(
       {
         callback = function(node)
@@ -75,19 +85,19 @@ function Telekinesis:await_select_inner()
     ["b"] = "block.inner",
     ["a"] = "parameter.inner",
   }
+  --
+  -- local picked_char = vim.fn.getcharstr()
+  -- local picked_node = mapping[picked_char]
+  --
+  -- if picked_node == nil then
+  --   self.logger:warn("No mapping for " .. picked_char)
+  --
+  --   utils.abort_operation()
+  --
+  --   return
+  -- end
 
-  local picked_char = vim.fn.getcharstr()
-  local picked_node = mapping[picked_char]
-
-  if picked_node == nil then
-    self.logger:warn("No mapping for " .. picked_char)
-
-    utils.abort_operation()
-
-    return
-  end
-
-  self:select({ picked_node })
+  self:select(mapping)
 end
 
 function Telekinesis:await_select_outer()

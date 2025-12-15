@@ -48,7 +48,10 @@ function Node:new(opts)
     ts_node = opts.ts_node,
     bufnr = opts.bufnr or 0,
     range = opts.range,
-    ns_id = vim.api.nvim_create_namespace("TelekinesisNode")
+    ns_id = vim.api.nvim_create_namespace("TelekinesisNode"),
+    label_prefix = opts.label_prefix or "",
+    label = opts.label or "",
+    __type = "Node",
   }
 
   local start_row, start_col, end_row, end_col = unpack(instance.range)
@@ -65,10 +68,11 @@ function Node:new(opts)
 end
 
 -- Renders the node based on its label using extmarks
-function Node:render_label(label)
+function Node:render_label()
+  assert(self.label ~= nil, "Node:render_label() requires a label to render")
   -- TODO: Should also render the entire node!
   local opts = {
-    virt_text = { { label, "TelekinesisLabel" } },
+    virt_text = { { self.label, "TelekinesisLabel" } },
     virt_text_pos = "inline",
   }
 
