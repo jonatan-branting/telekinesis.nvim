@@ -36,9 +36,9 @@ function Node.find_all_visible(captures, opts)
 
   return nodes
     :filter(function(node)
-      local start_row, _, end_row, _ = unpack(node.range)
+      local start_row, _, _, _ = unpack(node.range)
 
-      return start_row >= topline and end_row <= botline
+      return start_row >= topline and start_row <= botline
     end)
 end
 
@@ -100,31 +100,12 @@ function Node:distance_to_cursor()
   local cursor_row = cursor_pos[1] - 1
   local cursor_col = cursor_pos[2]
 
-  local start_row, start_col, end_row, end_col = unpack(self.range)
+  local start_row, start_col, _, _ = unpack(self.range)
 
-  local row_distance
-  if cursor_row < start_row then
-    row_distance = start_row - cursor_row
-  elseif cursor_row > end_row then
-    row_distance = cursor_row - end_row
-  else
-    row_distance = 0
-  end
+  local row_distance = math.abs(cursor_row - start_row)
 
-  local col_distance
-  if cursor_row < start_row then
-    col_distance = start_col - cursor_col
-  elseif cursor_row > end_row then
-    col_distance = cursor_col - end_col
-  else
-    if cursor_col < start_col then
-      col_distance = start_col - cursor_col
-    elseif cursor_col > end_col then
-      col_distance = cursor_col - end_col
-    else
-      col_distance = 0
-    end
-  end
+  -- Take perceived distance into account. A character on the same line _feels_ closer.
+  local col_distance = math.abs(cursor_col - start_col) / 4
 
   return math.sqrt(row_distance ^ 2 + col_distance ^ 2)
 end
