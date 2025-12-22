@@ -1,5 +1,7 @@
 local Picker = {}
 
+local logger = require("telekinesis").logger()
+
 function Picker:new(nodes)
   local instance = {
     nodes = nodes,
@@ -28,11 +30,20 @@ function Picker:render_labels(opts)
           return node:distance_to_cursor()
         end)
         :each(function(node, i)
+          if labels[i] == nil then
+            return
+          end
+
           node.label = node.label_prefix .. labels[i]
         end)
     end)
 
-  local candidates = self.nodes:dup()
+  local candidates = self.nodes
+    :dup()
+    :filter(function(node)
+      return node.label ~= ""
+    end)
+
   local label = ""
 
   while true do
@@ -42,10 +53,11 @@ function Picker:render_labels(opts)
 
     vim.cmd("redraw")
 
-    label = vim.fn.getcharstr()
+    input = vim.fn.getcharstr()
+    label = label .. input
 
     local picked = candidates:find(function(node)
-      return node.label == label
+      return node.label == input
     end)
 
     candidates:each(function(node)
@@ -53,23 +65,25 @@ function Picker:render_labels(opts)
     end)
 
     if picked then
+      logger:debug("Picked node: " .. picked.name)
       callback(picked)
 
       break
     end
 
     candidates = candidates:filter(function(node)
-      return node.label:sub(1, #label) == label
+      return node.label:sub(1, 1) == input
     end)
 
     if candidates:empty() then
       on_nothing_selected()
+      logger:debug("No node picked.")
 
       break
     end
 
     candidates:each(function(node)
-      node.label = node.label:sub(#label + 1)
+      node.label = node.label:sub(2)
     end)
   end
 end
