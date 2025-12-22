@@ -17,7 +17,7 @@ function Logger:new(opts)
 
   local minimum_level_found = false
 
-  for i, level in ipairs(levels) do
+  for _, level in ipairs(levels) do
     if instance.minimum_level ==  level.name then
       minimum_level_found = true
     end
@@ -39,6 +39,7 @@ function Logger:should_print_level(level)
       return true
     end
   end
+
   return false
 end
 
