@@ -13,7 +13,7 @@ end
 function Telekinesis.logger()
   return Logger:new(
     {
-      level = vim.env.telekinesis_LOG_LEVEL or "error",
+      level = vim.env.TELEKINESIS_LOG_LEVEL or "error",
     }
   )
 end
@@ -52,6 +52,16 @@ function Telekinesis:select(capture_groups)
   local Node = require("telekinesis.node")
   local Picker = require("telekinesis.picker")
 
+  local pending_input = ""
+  local macro_is_recording = vim.fn.reg_recording() ~= ""
+  local macro_is_executing = vim.fn.reg_executing() ~= ""
+
+  if not macro_is_recording and not macro_is_executing then
+    while vim.fn.getchar(1) ~= 0 do
+      pending_input = pending_input .. vim.fn.getcharstr()
+    end
+  end
+
   local nodes = {}
   for key, captures in pairs(capture_groups) do
     Node
@@ -69,6 +79,12 @@ function Telekinesis:select(capture_groups)
       {
         callback = function(node)
           node:select()
+
+          if not macro_is_executing then
+            vim.schedule(function()
+              vim.api.nvim_feedkeys(pending_input, "m", false)
+            end)
+          end
         end,
         on_nothing_selected = function()
           utils.abort_operation()
@@ -112,7 +128,9 @@ function Telekinesis:await_select_inner()
     ["f"] = "function.inner",
     ["c"] = "class.inner",
     ["b"] = "block.inner",
-    ["a"] = "parameter.inner",
+    ["p"] = "parameter.inner",
+    ["o"] = "constant",
+    -- ["s"] = "string.inner"
   }
 
   self:select(mapping)
@@ -124,7 +142,9 @@ function Telekinesis:await_select_outer()
     ["f"] = "function.outer",
     ["c"] = "class.outer",
     ["b"] = "block.outer",
-    ["a"] = "parameter.outer",
+    ["p"] = "parameter.outer",
+    ["o"] = "constant",
+    -- ["s"] = "string.inner"
   }
 
   self:select(mapping)
@@ -135,7 +155,9 @@ function Telekinesis:await_goto_remote()
     ["f"] = "function.outer",
     ["c"] = "class.outer",
     ["b"] = "block.outer",
-    ["a"] = "parameter.inner",
+    ["p"] = "parameter.inner",
+    ["o"] = "constant",
+    -- ["s"] = "string.inner"
   }
   self:goto(mapping)
 end
