@@ -229,7 +229,6 @@ function Telekinesis:await_goto_next()
   assert(self.last_node, "No `last_node` recorded yet")
 
   local Node = require("telekinesis.node")
-  print("Count", vim.v.count1)
 
   Node
     .find_all_visible({ self.last_node.name }, { winid = 0 })
