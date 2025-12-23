@@ -169,25 +169,19 @@ function Telekinesis:await_goto_remote()
 end
 
 function Telekinesis:await_select_prev()
- assert(self.last_node, "No `last_node` recorded yet")
+  assert(self.last_node, "No `last_node` recorded yet")
 
   local Node = require("telekinesis.node")
 
   Node
     .find_all_visible({ self.last_node.name }, { winid = 0 })
     :sort(function(node)
-      local start_row, start_col, _, _ = unpack(node.range)
-
-      return start_row * 10000 + start_col
+      return node.start_row * 10000 + node.start_col
     end)
     :reverse()
     :find_maybe(function(node)
       local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
-      local start_row, start_col, _, _ = unpack(node.range)
-
-      start_row = start_row + 1
-
-      return (start_row < cursor_row) or (start_row == cursor_row and start_col < cursor_col)
+      return node.range:is_before(cursor_row - 1, cursor_col)
     end)
     :_then(function(node)
       node:select()
@@ -205,17 +199,11 @@ function Telekinesis:await_select_next()
   Node
     .find_all_visible({ self.last_node.name }, { winid = 0 })
     :sort(function(node)
-      local start_row, start_col, _, _ = unpack(node.range)
-
-      return start_row * 10000 + start_col
+      return node.start_row * 10000 + node.start_col
     end)
     :find_maybe(function(node)
       local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
-      local start_row, start_col, _, _ = unpack(node.range)
-
-      start_row = start_row + 1
-
-      return (start_row > cursor_row) or (start_row == cursor_row and start_col > cursor_col)
+      return node.range:is_after(cursor_row - 1, cursor_col)
     end)
     :_then(function(node)
       node:select()
@@ -233,17 +221,11 @@ function Telekinesis:await_goto_next()
   Node
     .find_all_visible({ self.last_node.name }, { winid = 0 })
     :sort(function(node)
-      local start_row, start_col, _, _ = unpack(node.range)
-
-      return start_row * 10000 + start_col
+      return node.start_row * 10000 + node.start_col
     end)
     :select(function(node)
       local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
-      local start_row, start_col, _, _ = unpack(node.range)
-
-      start_row = start_row + 1
-
-      return (start_row > cursor_row) or (start_row == cursor_row and start_col > cursor_col)
+      return node.range:is_after(cursor_row - 1, cursor_col)
     end)
     :_then(function(nodes)
       local node = nodes[math.min(vim.v.count1, #nodes)]
@@ -260,21 +242,16 @@ function Telekinesis:await_goto_prev()
   assert(self.last_node, "No `last_node` recorded yet")
 
   local Node = require("telekinesis.node")
+
   Node
     .find_all_visible({ self.last_node.name }, { winid = 0 })
     :sort(function(node)
-      local start_row, start_col, _, _ = unpack(node.range)
-
-      return start_row * 10000 + start_col
+      return node.start_row * 10000 + node.start_col
     end)
     :reverse()
     :select(function(node)
       local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
-      local start_row, start_col, _, _ = unpack(node.range)
-
-      start_row = start_row + 1
-
-      return (start_row < cursor_row) or (start_row == cursor_row and start_col < cursor_col)
+      return node.range:is_before(cursor_row - 1, cursor_col)
     end)
     :_then(function(nodes)
       local node = nodes[math.min(vim.v.count1, #nodes)]

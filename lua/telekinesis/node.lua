@@ -30,24 +30,24 @@ function Node.find_all_visible(captures, opts)
 
   local topline, botline
   vim.api.nvim_win_call(winid, function()
-    topline = vim.fn.line("w0") - 1
+    topline = vim.fn.line("w0")
     botline = vim.fn.line("w$")
   end)
 
   return nodes
     :filter(function(node)
-      local start_row, _, _, _ = unpack(node.range)
-
-      return start_row >= topline and start_row <= botline
+      return node.range:is_visible(topline, botline)
     end)
 end
 
 function Node:new(opts)
+  local Range = require("telekinesis.range")
+
   local instance = {
     name = opts.name,
     ts_node = opts.ts_node,
     bufnr = opts.bufnr or 0,
-    range = opts.range,
+    range = Range:new(opts.range, opts.bufnr or 0),
     capture_key = opts.capture_key or "",
     ns_id = vim.api.nvim_create_namespace("TelekinesisNode"),
     label_prefix = opts.label_prefix or "",
@@ -55,17 +55,17 @@ function Node:new(opts)
     __type = "Node",
   }
 
-  local start_row, start_col, end_row, end_col = unpack(instance.range)
-
-  instance.start_row = start_row
-  instance.start_col = start_col
-  instance.end_row = end_row
-  instance.end_col = end_col
-
   setmetatable(instance, self)
-  self.__index = self
 
   return instance
+end
+
+function Node.__index(instance, key)
+  if key == "start_row" or key == "start_col" or key == "end_row" or key == "end_col" then
+    return instance.range[key]
+  else
+    return Node[key]
+  end
 end
 
 -- Renders the node based on its label using extmarks
@@ -98,42 +98,22 @@ end
 
 function Node:distance_to_cursor()
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
-  local cursor_row = cursor_pos[1] - 1
+  local cursor_row = cursor_pos[1] - 1  -- Convert to 0-indexed
   local cursor_col = cursor_pos[2]
 
-  local start_row, start_col, _, _ = unpack(self.range)
-
-  local row_distance = math.abs(cursor_row - start_row)
-
-  -- Take perceived distance into account. A character on the same line _feels_ closer.
-  local col_distance = math.abs(cursor_col - start_col) / 4
-
-  return math.sqrt(row_distance ^ 2 + col_distance ^ 2)
+  return self.range:distance(cursor_row, cursor_col)
 end
 
 function Node:content()
-  local start_row, start_col, end_row, end_col = unpack(self.range)
-
-  logger:debug("Node:content() range:", start_row, start_col, end_row, end_col)
-
-  return vim.api.nvim_buf_get_text(self.bufnr, start_row, start_col, end_row, end_col, {})
+  return self.range:content()
 end
 
 function Node:select()
-  logger:debug("Node:select()")
-
-  vim.fn.setpos("'<", { self.bufnr, self.start_row + 1, self.start_col + 1, 0 })
-  vim.fn.setpos("'>", { self.bufnr, self.end_row + 1, self.end_col, 0 })
-
-  -- `o` to set the cursor to the start of the selection, as this likely keeps
-  -- the viewport more stable in most cases
-  vim.cmd("normal! gvo")
+  self.range:select()
 end
 
 function Node:goto()
-  logger:debug("Node:goto()")
-
-  vim.api.nvim_win_set_cursor(0, { self.start_row + 1, self.start_col })
+  self.range:goto_start()
 end
 
 return Node
