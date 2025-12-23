@@ -30,7 +30,7 @@ function Node.find_all_visible(captures, opts)
 
   local topline, botline
   vim.api.nvim_win_call(winid, function()
-    topline = vim.fn.line("w0")
+    topline = vim.fn.line("w0") - 1
     botline = vim.fn.line("w$")
   end)
 
@@ -48,6 +48,7 @@ function Node:new(opts)
     ts_node = opts.ts_node,
     bufnr = opts.bufnr or 0,
     range = opts.range,
+    capture_key = opts.capture_key or "",
     ns_id = vim.api.nvim_create_namespace("TelekinesisNode"),
     label_prefix = opts.label_prefix or "",
     label = opts.label or "",

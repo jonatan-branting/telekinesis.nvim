@@ -26,6 +26,27 @@ describe(".find_all", function()
   end)
 end)
 
+describe(".find_all_visible", function()
+  it("returns all visible nodes matching a given query", function()
+    local bufnr = t.setup_buffer(
+      [[
+        local function hello(arg)
+          print('Hello, world!')
+        end
+      ]],
+      "lua"
+    )
+    local captures = { "function.inner" }
+
+    -- Scroll down so that the function is not visible
+    vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+    local result = Node.find_all_visible(captures, { winid = 0 })
+
+    assert.same(0, result:length())
+  end)
+end)
+
 describe("#render_label", function()
   it("renders a label next to the node and returns the id of the extmark", function()
     local bufnr = t.setup_buffer(
@@ -38,8 +59,9 @@ describe("#render_label", function()
     )
     local captures = { "function.inner" }
     local node = Node.find_all(captures, { bufnr = bufnr }):first()
+    node.label = "test"
 
-    local extmark_id = node:render_label("test")
+    local extmark_id = node:render_label()
     local extmark = vim.api.nvim_buf_get_extmark_by_id(bufnr, node.ns_id, extmark_id, { details = true })
 
     assert.same(node.start_row, extmark[1])
@@ -72,7 +94,7 @@ describe("#select", function()
   end)
 end)
 
-describe("#jump_to", function()
+describe("#goto", function()
   it("sets the cursor to the start of the node", function()
     local bufnr = t.setup_buffer(
       [[
@@ -85,8 +107,8 @@ describe("#jump_to", function()
     local captures = { "function.inner" }
     local node = Node.find_all(captures, { bufnr = bufnr }):first()
 
-    node:jump_to()
+    node:goto()
 
-    assert.same({ 3, 3 }, vim.api.nvim_win_get_cursor(0))
+    assert.same({ 3, 2 }, vim.api.nvim_win_get_cursor(0))
   end)
 end)

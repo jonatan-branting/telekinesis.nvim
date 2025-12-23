@@ -31,6 +31,16 @@ function Enumerable:length()
   return #self.items
 end
 
+function Enumerable:reverse()
+  local reversed = {}
+
+  for i = #self.items, 1, -1 do
+    table.insert(reversed, self.items[i])
+  end
+
+  return Enumerable:new(reversed)
+end
+
 function Enumerable:contains(item)
   for _, i in pairs(self.items) do
     if i == item then
@@ -207,12 +217,30 @@ function Enumerable:tap(func)
   return self
 end
 
-function Enumerable:last()
-  return self.items[#self.items]
+function Enumerable:last(count)
+  count = count or 1
+  if count == 1 then
+    return self.items[self:length()]
+  end
+
+  local result = {}
+
+  for i = self:length() - count + 1, self:length() do
+    table.insert(result, self.items[i])
+  end
+
+  return result
 end
 
-function Enumerable:first()
-  return self.items[1]
+function Enumerable:first(count)
+  count = count or 1
+  local result = {}
+
+  for i = 1, count do
+    table.insert(result, self.items[i])
+  end
+
+  return result
 end
 
 function Enumerable:table()
@@ -229,6 +257,12 @@ function Enumerable:sort(func)
   end)
 
   return self
+end
+
+function Enumerable:maybe(func)
+  local result = func(self)
+
+  return Maybe(result)
 end
 
 return Enumerable
