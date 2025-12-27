@@ -4,6 +4,8 @@ local logger = require("telekinesis"):logger()
 local Node = {}
 
 function Node.find_all(captures, opts)
+  captures = captures or {}
+
   if type(captures) == "string" then
     captures = { captures }
   end
@@ -15,12 +17,28 @@ function Node.find_all(captures, opts)
     :new({ bufnr = bufnr })
     :nodes()
     :filter(function(node)
+      if #captures == 0 then
+        return true
+      end
       for _, capture in ipairs(captures) do
         if node.name:sub(1, #capture) == capture then return true end
       end
 
       return false
     end)
+end
+
+function Node.find_all_in_selection(captures, opts)
+  local winid = opts.winid or 0
+  local bufnr = vim.api.nvim_win_get_buf(winid)
+  local nodes = Node.find_all(captures, { bufnr = bufnr })
+
+  local _, start_line, start_col = unpack(vim.fn.getpos("'<"))
+  local _, end_line, end_col     = unpack(vim.fn.getpos("'>"))
+
+  return nodes:filter(function(node)
+    return node:within({ start_line - 1, start_col, end_line - 1, end_col })
+  end)
 end
 
 function Node.find_all_visible(captures, opts)
@@ -34,10 +52,26 @@ function Node.find_all_visible(captures, opts)
     botline = vim.fn.line("w$")
   end)
 
-  return nodes
-    :filter(function(node)
-      return node.range:is_visible(topline, botline)
-    end)
+  return nodes:filter(function(node)
+    return node.range:is_visible(topline, botline)
+  end)
+end
+
+function Node.find_all_under_cursor(captures, opts)
+  local winid = opts.winid or 0
+  local bufnr = vim.api.nvim_win_get_buf(winid)
+  local nodes = Node.find_all(captures, { bufnr = bufnr })
+
+  local topline, botline
+  vim.api.nvim_win_call(winid, function()
+    topline = vim.fn.line("w0")
+    botline = vim.fn.line("w$")
+  end)
+  local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(winid))
+
+  return nodes:filter(function(node)
+    return node.range:contains(cursor_row - 1, cursor_col) and node.range:is_visible(topline, botline)
+  end)
 end
 
 function Node:new(opts)
@@ -112,8 +146,31 @@ function Node:select()
   self.range:select()
 end
 
+function Node:size()
+  return self.range:size()
+end
+
+function Node:within(range)
+  local Range = require("telekinesis.range")
+  range = Range:new(range, self.bufnr)
+
+  return range:contains(self.start_row, self.start_col) and range:contains(self.end_row, self.end_col)
+end
+
 function Node:goto()
   self.range:goto_start()
+end
+
+function Node:equals(other_node)
+  if not other_node or other_node.__type ~= "Node" then
+    return false
+  end
+
+  return self.bufnr == other_node.bufnr
+    and self.start_row == other_node.start_row
+    and self.start_col == other_node.start_col
+    and self.end_row == other_node.end_row
+    and self.end_col == other_node.end_col
 end
 
 return Node

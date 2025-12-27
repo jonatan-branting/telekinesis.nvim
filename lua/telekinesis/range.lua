@@ -56,6 +56,22 @@ function Range:distance(row, col)
   return math.sqrt(row_distance ^ 2 + col_distance ^ 2)
 end
 
+function Range:contains(row, col)
+  if row < self.start_row or row > self.end_row then
+    return false
+  end
+
+  if row == self.start_row and col < self.start_col then
+    return false
+  end
+
+  if row == self.end_row and col >= self.end_col then
+    return false
+  end
+
+  return true
+end
+
 function Range:is_visible(topline, botline)
   -- topline/botline from vim.fn.line("w0"/"w$") are 1-indexed
   -- start_row is 0-indexed, so convert for comparison
@@ -67,14 +83,16 @@ end
 function Range:content()
   logger:debug("Range:content() range:", self.start_row, self.start_col, self.end_row, self.end_col)
 
-  return vim.api.nvim_buf_get_text(
-    self.bufnr,
-    self.start_row,
-    self.start_col,
-    self.end_row,
-    self.end_col,
-    {}
-  )
+  return table.concat(
+    vim.api.nvim_buf_get_text(
+      self.bufnr,
+      self.start_row,
+      self.start_col,
+      self.end_row,
+      self.end_col,
+      {}
+    ),
+    "\n")
 end
 
 function Range:select()
@@ -94,6 +112,17 @@ function Range:goto_start()
 
   -- Convert 0-indexed to 1-indexed for Vim API
   vim.api.nvim_win_set_cursor(0, { self.start_row + 1, self.start_col })
+end
+
+function Range:size()
+  local line_count = self.end_row - self.start_row + 1
+
+  if line_count == 1 then
+    return self.end_col - self.start_col
+  else
+    -- Approximate size for multi-line ranges
+    return (line_count - 1) * 80 + (self.end_col - self.start_col)
+  end
 end
 
 return Range

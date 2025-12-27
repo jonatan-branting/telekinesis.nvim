@@ -2,6 +2,62 @@ local t = require("../test_utils")
 
 local Node = require("telekinesis.node")
 
+describe(".find_all_in_selection", function()
+  it("returns the nodes within the visual selection matching a given query", function()
+    local bufnr = t.setup_buffer(
+      [[
+        local function hello(arg)
+          print('Hello, world!', arg)
+        end
+      ]],
+      "lua"
+    )
+    local captures = { "variable" }
+
+    -- Create a visual selection around the function
+    t.feed("gg0jwwvjj$<esc>")
+
+    local result = Node.find_all_in_selection(captures, { bufnr = bufnr }):to_table()[1]
+
+    assert.same("variable", result.name)
+    assert.same(
+      {
+        "arg"
+      },
+      result:content()
+    )
+  end)
+end)
+
+describe(".find_all_under_cursor", function()
+  it("returns the nodes under the cursor matching a given query", function()
+    local bufnr = t.setup_buffer(
+      [[
+        local function hello(arg)
+          print('Hello, world!', arg)
+        end
+      ]],
+      "lua"
+    )
+    local captures = { "variable" }
+
+    -- Place the cursor inside the function
+    vim.api.nvim_win_set_cursor(0, { 2, 23 })
+
+    local result = Node.find_all_under_cursor(captures, { bufnr = bufnr }):to_table()[1]
+
+    print(vim.inspect(result))
+
+    assert.same("variable", result.name)
+    assert.same(
+      {
+        "arg"
+      },
+      result:content()
+    )
+  end)
+end)
+
 describe(".find_all", function()
   it("returns all nodes matching a given query", function()
     local bufnr = t.setup_buffer(

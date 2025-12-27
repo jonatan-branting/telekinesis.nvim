@@ -124,4 +124,6 @@
 ; statement
 (statement) @statement.outer
 
+(identifier) @variable
+
 (return_statement) @statement.outer

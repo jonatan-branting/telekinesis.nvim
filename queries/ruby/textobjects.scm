@@ -8,3 +8,5 @@
 
 ; argument (make hash key/value pairs part of arguments)
 (pair) @parameter.inner
+
+(identifier) @variable

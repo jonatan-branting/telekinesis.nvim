@@ -4,6 +4,36 @@ local utils = require("telekinesis.lib.utils")
 
 local Telekinesis = {}
 
+_G.Telekinesis_occurrence_operator = function(type)
+  local instance = Telekinesis.instance()
+
+  local Node = require("telekinesis.node")
+  local Cursor = require("polykinesis.cursor")
+
+  local captures = { instance.occurrence_operator_opts.node_name, }
+  instance.occurrence_operator_opts.node:goto()
+
+  require("polykinesis").instance():clear_buffer()
+
+  Node
+    .find_all_in_selection(captures, { winid = 0 })
+    :filter(function(node)
+      return node:content() == instance.occurrence_operator_opts.node_content
+    end)
+    :reject(function(node)
+      return node:equals(instance.occurrence_operator_opts.node)
+    end)
+    :map(function(node)
+      return Cursor:new({ row = node.start_row, col = node.start_col, bufnr = node.bufnr})
+    end)
+    :each(function(cursor)
+      require("polykinesis").instance():add_cursor(cursor)
+    end)
+
+  utils.abort_operation()
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(instance.current_operator .. "iw", true, false, true), "mt", false)
+end
+
 function Telekinesis.instance()
   assert(_G.telekinesis_instance, "Telekinesis has not been setup")
 
@@ -40,6 +70,8 @@ function Telekinesis:new(opts)
     logger = Telekinesis.logger(),
     last_capture_group = {},
     last_node = nil,
+    current_operatorfunc = nil,
+    current_operator = nil,
   }
 
   setmetatable(instance, self)
@@ -138,6 +170,7 @@ function Telekinesis:await_select_inner()
     ["c"] = "class.inner",
     ["b"] = "block.inner",
     ["p"] = "parameter.inner",
+    ["a"] = "parameter.inner",
     ["o"] = "constant",
   }
 
@@ -151,6 +184,7 @@ function Telekinesis:await_select_outer()
     ["c"] = "class.outer",
     ["b"] = "block.outer",
     ["p"] = "parameter.outer",
+    ["a"] = "parameter.outer",
     ["o"] = "constant",
   }
 
@@ -262,6 +296,37 @@ function Telekinesis:await_goto_prev()
         vim.notify("No prev node found", vim.log.levels.WARN)
       end
     end)
+end
+
+-- This chains _with other motions_ effectively allowing you to reinterpret the incoming motion.
+function Telekinesis:await_select_occurrences()
+  local Node = require("telekinesis.node")
+
+  local node = Node.find_all_under_cursor({ "variable", "function.inner", "block", "constant", "parameter" }, { winid = 0 })
+    :sort(function(node)
+      return node:size()
+    end)
+    :to_table()[1]
+
+  assert(node, "No node found under cursor")
+
+  self.current_operator = vim.v.operator
+  self.current_operatorfunc = vim.go.operatorfunc
+  self.occurrence_operator_opts = {
+    node = node,
+    node_name = node.name,
+    node_content = node:content(),
+  }
+
+  vim.go.operatorfunc = "v:lua.Telekinesis_occurrence_operator"
+
+  utils.abort_operation()
+
+  vim.schedule(function()
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("g@", true, false, true), "n", false)
+  end)
+
+  -- return "<Esc>g@"
 end
 
 return Telekinesis
