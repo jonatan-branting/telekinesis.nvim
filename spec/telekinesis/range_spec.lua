@@ -1,4 +1,5 @@
 local Range = require("telekinesis.range")
+local t = require("../test_utils")
 
 describe("Range", function()
   describe(":new", function()
@@ -264,6 +265,37 @@ describe("Range", function()
         -- Cursor uses 1-indexed row, 0-indexed col
         assert.same({ 3, 2 }, vim.api.nvim_win_get_cursor(0))
       end)
+    end)
+  end)
+
+  describe(":foreach_line", function()
+    it("iterates over each line in the range", function()
+      local bufnr = t.setup_buffer(
+        [[
+          line1
+          line2
+          line3
+          line4
+        ]],
+        "lua"
+      )
+
+      local range = Range:new({2, 2, 4, 5}, bufnr)  -- lines 2 to 4 (0-indexed)
+
+      local result = {}
+      range:foreach_line(function(line, i, start_col, end_col)
+        table.insert(result, {
+          line = line,
+          line_number = i,
+          start_col = start_col,
+          end_col = end_col,
+        })
+      end)
+
+      assert.same(3, #result)
+      assert.same({ line = "ne2", line_number = 2, start_col = 2, end_col = 5 }, result[1])
+      assert.same({ line = "line3", line_number = 3, start_col = 0, end_col = 5 }, result[2])
+      assert.same({ line = "line4", line_number = 4, start_col = 0, end_col = 5 }, result[3])
     end)
   end)
 end)

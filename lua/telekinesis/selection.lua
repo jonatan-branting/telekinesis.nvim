@@ -3,6 +3,17 @@ local logger = require("telekinesis"):logger()
 
 local Selection = {}
 
+function Selection.from_visual_selection(bufnr)
+  local Range = require("telekinesis.range")
+
+  local _, start_line, start_col = unpack(vim.fn.getpos("'<"))
+  local _, end_line, end_col     = unpack(vim.fn.getpos("'>"))
+
+  local range = Range:new({ start_line - 1, start_col - 1, end_line - 1, end_col - 1 }, bufnr or 0)
+
+  return Selection:new({ range = range, bufnr = bufnr or 0 })
+end
+
 function Selection:new(opts)
   local Range = require("telekinesis.range")
 
@@ -25,30 +36,9 @@ function Selection.__index(instance, key)
 end
 
 function Selection:render()
-  local opts = {
-    hl_group = "Visual", -- TODO add TelekinesisSelection highlight group, and abind that to Visual by default!
-    hl_mode = "combine",
-    end_row = self.end_row,
-    end_col = self.end_col,
-  }
-
-  if self.id then
-    opts.id = self.id
-  end
-
-  self.id = vim.api.nvim_buf_set_extmark(self.bufnr, self.ns_id, self.start_row, self.start_col, opts)
-
-  return self.id
 end
 
 function Selection:clear()
-  logger:debug("Selection:clear()")
-
-  if self.id then
-    vim.api.nvim_buf_del_extmark(self.bufnr, self.ns_id, self.id)
-
-    self.id = nil
-  end
 end
 
 function Selection:content()
@@ -61,6 +51,14 @@ end
 
 function Selection:goto()
   self.range:goto_start()
+end
+
+function Selection:lines()
+  return Enumerable:new(self.range:content())
+end
+
+function Selection:foreach_line(func)
+  return self.range:foreach_line(func)
 end
 
 return Selection

@@ -1,39 +1,57 @@
-local logger = require("telekinesis"):logger()
+local logger = require("telekinesis").logger()
+local Enumerable = require("telekinesis.lib.enumerable")
 
 local Range = {}
 
 function Range:new(coords, bufnr)
+  if coords.__type == "Range" then
+    return coords
+  end
+
   local instance = {
-    coords = coords,
-    bufnr = bufnr or 0,
+    extmark_id = nil,
+    ns_id = vim.api.nvim_create_namespace("PolykinesisRangeNamespace"),
     __type = "Range",
   }
+
 
   setmetatable(instance, {
     __index = function(t, key)
       if key == "start_row" then
-        return t.coords[1]
+        return Range.get_coords(t)[1]
       elseif key == "start_col" then
-        return t.coords[2]
+        return Range.get_coords(t)[2]
       elseif key == "end_row" then
-        return t.coords[3]
+        return Range.get_coords(t)[3]
       elseif key == "end_col" then
-        return t.coords[4]
+        return Range.get_coords(t)[4]
       else
         return Range[key]
       end
     end
   })
 
+  instance:attach(bufnr or 0, coords)
+
   return instance
 end
 
-function Range:unpack()
-  return unpack(self.coords)
-end
+function Range:get_coords()
+  local extmark = vim.api.nvim_buf_get_extmark_by_id(
+    self.bufnr,
+    self.ns_id,
+    self.extmark_id,
+    {
+      details = true,
+    }
+  )
 
-function Range:to_table()
-  return self.coords
+  return {
+    math.min(extmark[1], extmark[3].end_row),
+    math.min(extmark[2], extmark[3].end_col),
+    math.max(extmark[1], extmark[3].end_row),
+    math.max(extmark[2], extmark[3].end_col),
+  }
 end
 
 function Range:is_before(row, col)
@@ -47,7 +65,6 @@ function Range:is_after(row, col)
 end
 
 function Range:distance(row, col)
-  -- Expects 0-indexed coordinates (matching Range's internal format)
   local row_distance = math.abs(row - self.start_row)
 
   -- Take perceived distance into account. A character on the same line _feels_ closer.
@@ -56,49 +73,49 @@ function Range:distance(row, col)
   return math.sqrt(row_distance ^ 2 + col_distance ^ 2)
 end
 
-function Range:contains(row, col)
-  if row < self.start_row or row > self.end_row then
-    return false
-  end
-
-  if row == self.start_row and col < self.start_col then
-    return false
-  end
-
-  if row == self.end_row and col >= self.end_col then
-    return false
-  end
-
-  return true
-end
-
 function Range:is_visible(topline, botline)
-  -- topline/botline from vim.fn.line("w0"/"w$") are 1-indexed
-  -- start_row is 0-indexed, so convert for comparison
-  local start_row = self.start_row + 1
-
-  return start_row >= topline and start_row <= botline
+  return self.start_row >= topline and self.start_row <= botline
 end
 
 function Range:content()
-  logger:debug("Range:content() range:", self.start_row, self.start_col, self.end_row, self.end_col)
+  local lines = self:lines()
 
-  return table.concat(
-    vim.api.nvim_buf_get_text(
-      self.bufnr,
-      self.start_row,
-      self.start_col,
-      self.end_row,
-      self.end_col,
-      {}
-    ),
-    "\n")
+  return table.concat(lines, "\n")
+end
+
+function Range:lines()
+  local lines = vim.api.nvim_buf_get_text(
+    self.bufnr,
+    self.start_row,
+    self.start_col,
+    self.end_row,
+    self.end_col,
+    {}
+  )
+
+  return lines
+end
+
+function Range:foreach_line(func)
+  local lines = self:lines()
+  local result = {}
+
+  for i = self.start_row, self.end_row do
+    local line_idx = i - self.start_row + 1
+
+    local start_col = 0
+    if i == self.start_row then
+      start_col = self.start_col
+    end
+    local end_col = #lines[line_idx] + start_col
+
+    table.insert(result, { func(lines[line_idx], i, start_col, end_col) })
+  end
+
+  return Enumerable:new(result)
 end
 
 function Range:select()
-  logger:debug("Range:select()")
-
-  -- Convert 0-indexed to 1-indexed for Vim APIs
   vim.fn.setpos("'<", { self.bufnr, self.start_row + 1, self.start_col + 1, 0 })
   vim.fn.setpos("'>", { self.bufnr, self.end_row + 1, self.end_col, 0 })
 
@@ -110,19 +127,33 @@ end
 function Range:goto_start()
   logger:debug("Range:goto_start()")
 
-  -- Convert 0-indexed to 1-indexed for Vim API
-  vim.api.nvim_win_set_cursor(0, { self.start_row + 1, self.start_col })
+  vim.api.nvim_win_set_cursor(0, { self.start_row, self.start_col })
 end
 
-function Range:size()
-  local line_count = self.end_row - self.start_row + 1
+function Range:clear()
+  if self.extmark_id then
+    vim.api.nvim_buf_del_extmark(self.bufnr, self.ns_id, self.extmark_id)
 
-  if line_count == 1 then
-    return self.end_col - self.start_col
-  else
-    -- Approximate size for multi-line ranges
-    return (line_count - 1) * 80 + (self.end_col - self.start_col)
+    self.bufnr = nil
+    self.id = nil
   end
+end
+
+function Range:attach(bufnr, range)
+  local start_row, start_col, end_row, end_col = unpack(range)
+  self:clear()
+
+  self.bufnr = bufnr
+  self.extmark_id = vim.api.nvim_buf_set_extmark(
+    self.bufnr,
+    self.ns_id,
+    start_row,
+    start_col,
+    {
+      end_row = end_row,
+      end_col = end_col,
+    }
+  )
 end
 
 return Range
