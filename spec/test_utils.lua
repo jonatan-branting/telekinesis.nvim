@@ -62,4 +62,8 @@ function M.script_path()
   return str:match(("(.*%s)"):format("/"))
 end
 
+function M.set_cursor(row, col)
+  vim.api.nvim_win_set_cursor(0, { row + 1, col })
+end
+
 return M
