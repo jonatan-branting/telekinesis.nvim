@@ -46,8 +46,6 @@ describe(".find_all_under_cursor", function()
 
     local result = Node.find_all_under_cursor(captures, { bufnr = bufnr }):to_table()[1]
 
-    print(vim.inspect(result))
-
     assert.same("variable", result.name)
     assert.same(
       {

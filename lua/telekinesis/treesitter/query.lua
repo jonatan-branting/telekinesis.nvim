@@ -26,7 +26,12 @@ function Query.add_directives()
       -- How can you shut up this lint warning?
       metadata.from = from_node
       metadata.to = to_node
-      metadata.range = { from_node:start(), to_node:end_() }
+
+      local start_row, start_col, _ = from_node:start()
+      local end_row, end_col, _ = to_node:end_()
+      metadata.range = { start_row, start_col, end_row, end_col }
+
+      -- print("make-range! from:", vim.inspect(from_node), "to:", vim.inspect(to_node), "range:", vim.inspect(metadata.range))
 
       logger:debug("Query.make-range! metadata:", vim.inspect(metadata))
     end,
@@ -61,6 +66,7 @@ function Query:nodes()
 
   for _, match, metadata in self.query:iter_matches(self.root, self.bufnr, 0, -1) do
     if metadata.directive == "make-range!" then
+      -- print("Query:nodes make-range! metadata:", vim.inspect(metadata))
       local node = Node:new({ range = metadata.range, bufnr = self.bufnr, name = metadata.capture_name })
 
       table.insert(nodes, node)

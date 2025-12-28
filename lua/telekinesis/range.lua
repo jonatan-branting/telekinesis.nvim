@@ -77,6 +77,49 @@ function Range:is_visible(topline, botline)
   return self.start_row >= topline and self.start_row <= botline
 end
 
+function Range:contains(row, col)
+  if row < self.start_row or row > self.end_row then
+    return false
+  end
+
+  if row == self.start_row and col < self.start_col then
+    return false
+  end
+
+  if row == self.end_row and col > self.end_col then
+    return false
+  end
+
+  return true
+end
+
+function Range:size()
+  local lines = self:lines()
+
+  if #lines == 0 then
+    return 0
+  end
+
+  if #lines == 1 then
+    return #lines[1]
+  end
+
+  local size = 0
+
+  -- First line
+  size = size + (#lines[1] - self.start_col)
+
+  -- Middle lines
+  for i = 2, #lines - 1 do
+    size = size + #lines[i]
+  end
+
+  -- Last line
+  size = size + self.end_col
+
+  return size
+end
+
 function Range:content()
   local lines = self:lines()
 
@@ -127,7 +170,7 @@ end
 function Range:goto_start()
   logger:debug("Range:goto_start()")
 
-  vim.api.nvim_win_set_cursor(0, { self.start_row, self.start_col })
+  vim.api.nvim_win_set_cursor(0, { self.start_row + 1, self.start_col })
 end
 
 function Range:clear()
@@ -141,7 +184,6 @@ end
 
 function Range:attach(bufnr, range)
   local start_row, start_col, end_row, end_col = unpack(range)
-  self:clear()
 
   self.bufnr = bufnr
   self.extmark_id = vim.api.nvim_buf_set_extmark(

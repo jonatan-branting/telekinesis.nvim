@@ -265,4 +265,8 @@ function Enumerable:maybe(func)
   return Maybe(result)
 end
 
+function Enumerable:clear()
+  self.items = {}
+end
+
 return Enumerable

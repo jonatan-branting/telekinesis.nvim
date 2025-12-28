@@ -8,12 +8,12 @@ _G.Telekinesis_occurrence_operator = function(type)
   local instance = Telekinesis.instance()
 
   local Node = require("telekinesis.node")
-  local Cursor = require("polykinesis.cursor")
+  local Cursor = require("telekinesis.cursor")
 
   local captures = { instance.occurrence_operator_opts.node_name, }
-  instance.occurrence_operator_opts.node:goto()
+  instance.occurrence_operator_opts.node:to_cursor():goto()
 
-  require("polykinesis").instance():clear_buffer()
+  require("telekinesis.polykinesis").instance():clear_buffer()
 
   Node
     .find_all_in_selection(captures, { winid = 0 })
@@ -27,12 +27,16 @@ _G.Telekinesis_occurrence_operator = function(type)
       return Cursor:new({ row = node.start_row, col = node.start_col, bufnr = node.bufnr})
     end)
     :each(function(cursor)
-      require("polykinesis").instance():add_cursor(cursor)
+      require("telekinesis.polykinesis").instance():add_cursor(cursor)
     end)
 
   utils.abort_operation()
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(instance.current_operator .. "iw", true, false, true), "mt", false)
 end
+
+vim.keymap.set("o", "<Plug>(telekinesis-select-node)", function()
+
+end)
 
 function Telekinesis.instance()
   assert(_G.telekinesis_instance, "Telekinesis has not been setup")
@@ -57,7 +61,10 @@ function Telekinesis.setup(opts)
     opts or {}
   )
 
+  local Polykinesis = require("telekinesis.polykinesis")
+
   _G.telekinesis_instance = Telekinesis:new(opts)
+  _G.polykinesis_instance = Polykinesis:new(opts)
 
   vim.cmd([[hi! link TelekinesisLabel Cursor]])
 
@@ -298,6 +305,8 @@ function Telekinesis:await_goto_prev()
     end)
 end
 
+-- operator - await_select_occurrences -> occurrence_operator (add cursors) -> replay operator
+
 -- This chains _with other motions_ effectively allowing you to reinterpret the incoming motion.
 function Telekinesis:await_select_occurrences()
   local Node = require("telekinesis.node")
@@ -321,12 +330,94 @@ function Telekinesis:await_select_occurrences()
   vim.go.operatorfunc = "v:lua.Telekinesis_occurrence_operator"
 
   utils.abort_operation()
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("g@", true, false, true), "n", false)
+end
 
+-- c(hange)r(egex)i(n)f(unction)
+-- 
+-- The `r` operator here should reinterpret the selection from `if`, and return
+-- a cursor (along with a node), for each match!
+--
+--
+-- Question: Should the input regex be requested before or after the `if` selection?
+-- Answer: After!
+--
+-- And here, 
+function Telekinesis:await_select_matches()
+  self.current_operator = vim.v.operator
+  self.current_operatorfunc = vim.go.operatorfunc
+  self.match_operator_opts = {
+    view = vim.fn.winsaveview(),
+  }
+
+  vim.go.operatorfunc = "v:lua.Telekinesis_match_operator"
+
+  utils.abort_operation()
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("g@", true, false, true), "n", false)
+end
+
+_G.Telekinesis_match_operator = function(type)
+  local keys = vim.api.nvim_replace_termcodes("<Esc>", true, false, true)
+  vim.api.nvim_feedkeys(keys, "nx", false)
+
+  vim.fn.winrestview(Telekinesis.instance().match_operator_opts.view)
+
+  local instance = Telekinesis.instance()
+
+  -- Prompt for regex
+  local pattern = vim.fn.input("/")
+  if pattern == "" then
+    utils.abort_operation()
+    return
+  end
+
+  local regex = vim.regex(pattern)
+
+  local matches = {}
+
+  local Selection = require("telekinesis.selection")
+  Selection
+    .from_visual_selection(0)
+    :foreach_line(function(_, row, start_col, end_col)
+      local match_start, match_end = regex:match_line(0, row, start_col, end_col)
+
+      if not match_start then return end
+
+      table.insert(matches, {
+        row = row,
+        start_col = match_start,
+        end_col = match_end,
+      })
+    end)
+
+  local selections = Enumerable
+    :new(matches)
+    :map(function(match)
+      return Selection:new({
+        range = {
+          match.row,
+          match.start_col,
+          match.row,
+          match.end_col,
+        },
+        bufnr = 0,
+      })
+    end)
+    :to_table()
+
+  local first_selection = selections[1]
+  first_selection:select()
+
+  for i = 2, #selections do
+    local cursor = selections[i]:to_cursor()
+
+    require("telekinesis.polykinesis").instance():add_cursor(cursor)
+  end
+
+  utils.abort_operation()
   vim.schedule(function()
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("g@", true, false, true), "n", false)
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(instance.current_operator .. "iw", true, false, true), "mt", false)
   end)
-
-  -- return "<Esc>g@"
 end
 
 return Telekinesis

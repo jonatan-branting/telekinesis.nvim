@@ -1,4 +1,5 @@
 local Enumerable = require("telekinesis.lib.enumerable")
+local Cursor = require("telekinesis.cursor")
 local logger = require("telekinesis"):logger()
 
 local Node = {}
@@ -159,6 +160,14 @@ end
 
 function Node:goto()
   self.range:goto_start()
+end
+
+function Node:to_cursor()
+  return Cursor:new({
+    bufnr = self.bufnr,
+    row = self.start_row,
+    col = self.start_col,
+  })
 end
 
 function Node:equals(other_node)

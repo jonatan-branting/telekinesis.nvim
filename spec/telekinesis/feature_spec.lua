@@ -1,11 +1,17 @@
 local t = require("../test_utils")
 
+vim.keymap.set({"o", "x"}, "ig", function() return "ggvG" end, { expr = true })
 vim.keymap.set({"o", "x"}, "ir", function() require("telekinesis").instance():await_select_inner() end, {})
 vim.keymap.set({"n", "x"}, "s", function() require("telekinesis").instance():await_goto_remote() end, {})
-vim.keymap.set({ "o"}, "m", function() require("telekinesis").instance():await_select_occurrences() end, {})
+vim.keymap.set({ "o" }, "m", function() require("telekinesis").instance():await_select_occurrences() end, {})
+vim.keymap.set({ "o" }, "x", function() require("telekinesis").instance():await_select_matches() end, {})
 
-describe("await occurrences", function()
-  it("ca delete occurrences", function()
+describe("await matches", function()
+  it("can delete matches", function()
+    vim.fn.input = function()
+      return "print"
+    end
+
     t.setup_buffer(
       [[
         local foo = "bar"
@@ -17,8 +23,35 @@ describe("await occurrences", function()
       "lua"
     )
 
-    t.feed([[/arg<cr>n]])
-    t.feed([[dmip]])
+    t.feed([[dxig]])
+
+    assert.buffer_matches(
+      [[
+        local foo = "bar"
+        local function hello()
+          print('Hello, world!')
+          print()
+        end
+      ]]
+    )
+  end)
+end)
+
+describe("await occurrences", function()
+  it("can delete occurrences", function()
+    t.setup_buffer(
+      [[
+        local foo = "bar"
+        local function hello(arg)
+          print('Hello, world!', arg)
+          print(arg)
+        end
+      ]],
+      "lua"
+    )
+
+    t.feed([[/arg<cr>n]], "mt")
+    t.feed([[dmig]], "mtx")
 
     assert.buffer_matches(
       [[
