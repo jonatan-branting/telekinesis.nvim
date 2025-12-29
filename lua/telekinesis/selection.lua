@@ -1,5 +1,5 @@
 local Enumerable = require("telekinesis.lib.enumerable")
-local Cursor = require("telekinesis.cursor")
+local Cursor = require("polykinesis.cursor")
 local logger = require("telekinesis"):logger()
 
 local Selection = {}
@@ -8,7 +8,7 @@ function Selection.from_visual_selection(bufnr)
   local Range = require("telekinesis.range")
 
   local _, start_line, start_col = unpack(vim.fn.getpos("'<"))
-  local _, end_line, end_col     = unpack(vim.fn.getpos("'>"))
+  local _, end_line, end_col = unpack(vim.fn.getpos("'>"))
 
   local range = Range:new({ start_line - 1, start_col - 1, end_line - 1, end_col - 1 }, bufnr or 0)
 
@@ -36,11 +36,9 @@ function Selection.__index(instance, key)
   end
 end
 
-function Selection:render()
-end
+function Selection:render() end
 
-function Selection:clear()
-end
+function Selection:clear() end
 
 function Selection:content()
   return self.range:content()
@@ -50,8 +48,8 @@ function Selection:select()
   self.range:select()
 end
 
-function Selection:goto()
-  self.range:goto_start()
+function Selection:_goto()
+  self.range:_goto_start()
 end
 
 function Selection:lines()

@@ -9,10 +9,10 @@ _G.Telekinesis_occurrence_operator = function(type)
   vim.fn.winrestview(instance.occurrence_operator_opts.view)
 
   local Node = require("telekinesis.node")
-  local Cursor = require("telekinesis.cursor")
+  local Cursor = require("polykinesis.cursor")
 
   local captures = { instance.occurrence_operator_opts.node_name, }
-  instance.occurrence_operator_opts.node:to_cursor():goto()
+  instance.occurrence_operator_opts.node:to_cursor():_goto()
 
   require("polykinesis").instance():clear_buffer()
 
@@ -136,7 +136,7 @@ function Telekinesis:select(capture_groups)
     )
 end
 
-function Telekinesis:goto(capture_groups)
+function Telekinesis:_goto(capture_groups)
   local Node = require("telekinesis.node")
   local Picker = require("telekinesis.picker")
 
@@ -156,7 +156,7 @@ function Telekinesis:goto(capture_groups)
     :render_labels(
       {
         callback = function(node)
-          node:goto()
+          node:_goto()
 
           self.last_capture_group = node.capture_group
           self.last_node = node
@@ -204,7 +204,7 @@ function Telekinesis:await_goto_remote()
     ["p"] = "parameter.inner",
     ["o"] = "constant",
   }
-  self:goto(mapping)
+  self:_goto(mapping)
 end
 
 function Telekinesis:await_select_prev()
@@ -270,7 +270,7 @@ function Telekinesis:await_goto_next()
       local node = nodes[math.min(vim.v.count1, #nodes)]
 
       if node then
-        node:goto()
+        node:_goto()
       else
         vim.notify("No next node found", vim.log.levels.WARN)
       end
@@ -296,13 +296,51 @@ function Telekinesis:await_goto_prev()
       local node = nodes[math.min(vim.v.count1, #nodes)]
 
       if node then
-        node:goto()
+        node:_goto()
       else
         vim.notify("No prev node found", vim.log.levels.WARN)
       end
     end)
 end
 
+function Telekinesis:await_motion(func)
+  self.current_operator = vim.v.operator
+  self.current_operatorfunc = vim.go.operatorfunc
+
+  self.await_motion_operator_opts = {
+    view = vim.fn.winsaveview(),
+    func = func,
+  }
+
+  vim.go.operatorfunc = "v:lua.Telekinesis_await_motion_operator"
+
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>g@", true, false, true), "n", false)
+end
+
+_G.telekinesis_current_motion_operator_motion = function() end
+vim.keymap.set("o", "<Plug>(telekinesis-await-motion-operator-motion)", function()
+  return _G.telekinesis_current_motion_operator_motion()
+end, { expr = true })
+
+_G.Telekinesis_await_motion_operator = function(_)
+  local instance = Telekinesis.instance()
+  vim.fn.winrestview(instance.await_motion_operator_opts.view)
+
+  _G.telekinesis_current_motion_operator_motion = instance.await_motion_operator_opts.func()
+
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+
+  vim.schedule(function()
+    vim.go.operatorfunc = instance.current_operatorfunc
+
+    local keys = instance.current_operator .. "<Plug>(telekinesis-await-motion-operator-motion)"
+    local transformed_keys = vim.api.nvim_replace_termcodes(keys, true, false, true)
+
+    vim.api.nvim_feedkeys(transformed_keys, "mt", false)
+  end)
+end
+
+_
 -- operator - await_select_occurrences -> occurrence_operator (add cursors) -> replay operator
 
 -- This chains _with other motions_ effectively allowing you to reinterpret the incoming motion.
@@ -328,8 +366,7 @@ function Telekinesis:await_select_occurrences()
 
   vim.go.operatorfunc = "v:lua.Telekinesis_occurrence_operator"
 
-  utils.abort_operation()
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("g@", true, false, true), "n", false)
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>g@", true, false, true), "n", false)
 end
 
 -- c(hange)r(egex)i(n)f(unction)

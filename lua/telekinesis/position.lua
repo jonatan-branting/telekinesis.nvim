@@ -2,9 +2,7 @@ local logger = require("telekinesis").logger()
 
 local Position = {}
 
-function Position.from_visual_selection()
-
-end
+function Position.from_visual_selection() end
 
 function Position:new(bufnr, row, col)
   local instance = {
@@ -12,7 +10,6 @@ function Position:new(bufnr, row, col)
     ns_id = vim.api.nvim_create_namespace("TelekinesisPositionNamespace"),
     __type = "Position",
   }
-
 
   setmetatable(instance, {
     __index = function(t, key)
@@ -23,7 +20,7 @@ function Position:new(bufnr, row, col)
       else
         return Position[key]
       end
-    end
+    end,
   })
 
   instance:attach(bufnr or 0, row, col)
@@ -32,14 +29,9 @@ function Position:new(bufnr, row, col)
 end
 
 function Position:get_coords()
-  local extmark = vim.api.nvim_buf_get_extmark_by_id(
-    self.bufnr,
-    self.ns_id,
-    self.extmark_id,
-    {
-      details = true,
-    }
-  )
+  local extmark = vim.api.nvim_buf_get_extmark_by_id(self.bufnr, self.ns_id, self.extmark_id, {
+    details = true,
+  })
 
   return {
     extmark[1],
@@ -48,13 +40,11 @@ function Position:get_coords()
 end
 
 function Position:is_before(row, col)
-  return (self.row < row) or
-         (self.row == row and self.col < col)
+  return (self.row < row) or (self.row == row and self.col < col)
 end
 
 function Position:is_after(row, col)
-  return (self.row > row) or
-         (self.row == row and self.col > col)
+  return (self.row > row) or (self.row == row and self.col > col)
 end
 
 function Position:distance(row, col)
@@ -70,8 +60,8 @@ function Position:is_visible(topline, botline)
   return self.row >= topline and self.row <= botline
 end
 
-function Position:goto()
-  logger:debug("Position:goto()")
+function Position:_goto()
+  logger:debug("Position:_goto()")
 
   vim.api.nvim_win_set_cursor(0, { self.row + 1, self.col })
 end

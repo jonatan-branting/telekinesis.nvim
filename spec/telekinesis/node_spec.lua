@@ -20,12 +20,9 @@ describe(".find_all_in_selection", function()
     local result = Node.find_all_in_selection(captures, { bufnr = bufnr }):to_table()[1]
 
     assert.same("variable", result.name)
-    assert.same(
-      {
-        "arg"
-      },
-      result:content()
-    )
+    assert.same({
+      "arg",
+    }, result:content())
   end)
 end)
 
@@ -47,12 +44,9 @@ describe(".find_all_under_cursor", function()
     local result = Node.find_all_under_cursor(captures, { bufnr = bufnr }):to_table()[1]
 
     assert.same("variable", result.name)
-    assert.same(
-      {
-        "arg"
-      },
-      result:content()
-    )
+    assert.same({
+      "arg",
+    }, result:content())
   end)
 end)
 
@@ -71,12 +65,9 @@ describe(".find_all", function()
 
     assert.same(1, result:length())
     assert.same("function.inner", result:first().name)
-    assert.same(
-      {
-        [[print('Hello, world!')]]
-      },
-      result:first():content()
-    )
+    assert.same({
+      [[print('Hello, world!')]],
+    }, result:first():content())
   end)
 end)
 
@@ -161,7 +152,7 @@ describe("#goto", function()
     local captures = { "function.inner" }
     local node = Node.find_all(captures, { bufnr = bufnr }):first()
 
-    node:goto()
+    node:_goto()
 
     assert.same({ 3, 2 }, vim.api.nvim_win_get_cursor(0))
   end)

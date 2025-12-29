@@ -14,7 +14,6 @@ function Range:new(coords, bufnr)
     __type = "Range",
   }
 
-
   setmetatable(instance, {
     __index = function(t, key)
       if key == "start_row" then
@@ -28,7 +27,7 @@ function Range:new(coords, bufnr)
       else
         return Range[key]
       end
-    end
+    end,
   })
 
   instance:attach(bufnr or 0, coords)
@@ -37,14 +36,9 @@ function Range:new(coords, bufnr)
 end
 
 function Range:get_coords()
-  local extmark = vim.api.nvim_buf_get_extmark_by_id(
-    self.bufnr,
-    self.ns_id,
-    self.extmark_id,
-    {
-      details = true,
-    }
-  )
+  local extmark = vim.api.nvim_buf_get_extmark_by_id(self.bufnr, self.ns_id, self.extmark_id, {
+    details = true,
+  })
 
   return {
     math.min(extmark[1], extmark[3].end_row),
@@ -55,13 +49,11 @@ function Range:get_coords()
 end
 
 function Range:is_before(row, col)
-  return (self.start_row < row) or
-         (self.start_row == row and self.start_col < col)
+  return (self.start_row < row) or (self.start_row == row and self.start_col < col)
 end
 
 function Range:is_after(row, col)
-  return (self.start_row > row) or
-         (self.start_row == row and self.start_col > col)
+  return (self.start_row > row) or (self.start_row == row and self.start_col > col)
 end
 
 function Range:distance(row, col)
@@ -127,14 +119,7 @@ function Range:content()
 end
 
 function Range:lines()
-  local lines = vim.api.nvim_buf_get_text(
-    self.bufnr,
-    self.start_row,
-    self.start_col,
-    self.end_row,
-    self.end_col,
-    {}
-  )
+  local lines = vim.api.nvim_buf_get_text(self.bufnr, self.start_row, self.start_col, self.end_row, self.end_col, {})
 
   return lines
 end
@@ -167,8 +152,8 @@ function Range:select()
   vim.cmd("normal! gvo")
 end
 
-function Range:goto_start()
-  logger:debug("Range:goto_start()")
+function Range:_goto_start()
+  logger:debug("Range:_goto_start()")
 
   vim.api.nvim_win_set_cursor(0, { self.start_row + 1, self.start_col })
 end
@@ -186,16 +171,10 @@ function Range:attach(bufnr, range)
   local start_row, start_col, end_row, end_col = unpack(range)
 
   self.bufnr = bufnr
-  self.extmark_id = vim.api.nvim_buf_set_extmark(
-    self.bufnr,
-    self.ns_id,
-    start_row,
-    start_col,
-    {
-      end_row = end_row,
-      end_col = end_col,
-    }
-  )
+  self.extmark_id = vim.api.nvim_buf_set_extmark(self.bufnr, self.ns_id, start_row, start_col, {
+    end_row = end_row,
+    end_col = end_col,
+  })
 end
 
 return Range

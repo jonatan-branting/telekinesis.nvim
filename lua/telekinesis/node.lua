@@ -1,5 +1,5 @@
 local Enumerable = require("telekinesis.lib.enumerable")
-local Cursor = require("telekinesis.cursor")
+local Cursor = require("polykinesis.cursor")
 local logger = require("telekinesis"):logger()
 
 local Node = {}
@@ -14,19 +14,18 @@ function Node.find_all(captures, opts)
   local Query = require("telekinesis.treesitter.query")
   local bufnr = opts.bufnr or 0
 
-  return Query
-    :new({ bufnr = bufnr })
-    :nodes()
-    :filter(function(node)
-      if #captures == 0 then
+  return Query:new({ bufnr = bufnr }):nodes():filter(function(node)
+    if #captures == 0 then
+      return true
+    end
+    for _, capture in ipairs(captures) do
+      if node.name:sub(1, #capture) == capture then
         return true
       end
-      for _, capture in ipairs(captures) do
-        if node.name:sub(1, #capture) == capture then return true end
-      end
+    end
 
-      return false
-    end)
+    return false
+  end)
 end
 
 function Node.find_all_in_selection(captures, opts)
@@ -35,7 +34,7 @@ function Node.find_all_in_selection(captures, opts)
   local nodes = Node.find_all(captures, { bufnr = bufnr })
 
   local _, start_line, start_col = unpack(vim.fn.getpos("'<"))
-  local _, end_line, end_col     = unpack(vim.fn.getpos("'>"))
+  local _, end_line, end_col = unpack(vim.fn.getpos("'>"))
 
   return nodes:filter(function(node)
     return node:within({ start_line - 1, start_col, end_line - 1, end_col })
@@ -133,7 +132,7 @@ end
 
 function Node:distance_to_cursor()
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
-  local cursor_row = cursor_pos[1] - 1  -- Convert to 0-indexed
+  local cursor_row = cursor_pos[1] - 1 -- Convert to 0-indexed
   local cursor_col = cursor_pos[2]
 
   return self.range:distance(cursor_row, cursor_col)
@@ -158,8 +157,8 @@ function Node:within(range)
   return range:contains(self.start_row, self.start_col) and range:contains(self.end_row, self.end_col)
 end
 
-function Node:goto()
-  self.range:goto_start()
+function Node:_goto()
+  self.range:_goto_start()
 end
 
 function Node:to_cursor()
