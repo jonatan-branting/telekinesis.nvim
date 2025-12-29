@@ -1,44 +1,36 @@
 local Enumerable = require("telekinesis.lib.enumerable")
 local Node = require("telekinesis.node")
-local Query = {}
 local logger = require("telekinesis"):logger()
+
+local Query = {}
 
 function Query.add_directives()
   -- TODO: We need to allow this to override the directive if it's already there!
   -- Might be a flag?
   logger:debug("Query.add_directives")
 
-  vim.treesitter.query.add_directive(
-    "make-range!",
-    function (match, pattern, source, predicate, metadata)
-      assert(#predicate == 4)
+  vim.treesitter.query.add_directive("make-range!", function(match, pattern, source, predicate, metadata)
+    assert(#predicate == 4)
 
-      local capture_name = predicate[2] -- e.g., "@parameter.outer"
-      local from_node = match[predicate[3]]
-      local to_node = match[predicate[4]]
+    local capture_name = predicate[2] -- e.g., "@parameter.outer"
+    local from_node = match[predicate[3]]
+    local to_node = match[predicate[4]]
 
-      from_node = from_node or to_node
-      to_node = to_node or from_node
+    from_node = from_node or to_node
+    to_node = to_node or from_node
 
-      metadata.directive = "make-range!"
-      metadata.capture_name = capture_name
+    metadata.directive = "make-range!"
+    metadata.capture_name = capture_name
 
-      -- How can you shut up this lint warning?
-      metadata.from = from_node
-      metadata.to = to_node
+    metadata.from = from_node
+    metadata.to = to_node
 
-      local start_row, start_col, _ = from_node:start()
-      local end_row, end_col, _ = to_node:end_()
-      metadata.range = { start_row, start_col, end_row, end_col }
-
-      -- print("make-range! from:", vim.inspect(from_node), "to:", vim.inspect(to_node), "range:", vim.inspect(metadata.range))
-
-      logger:debug("Query.make-range! metadata:", vim.inspect(metadata))
-    end,
-    {
-      force = true
-    }
-  )
+    local start_row, start_col, _ = from_node:start()
+    local end_row, end_col, _ = to_node:end_()
+    metadata.range = { start_row, start_col, end_row, end_col }
+  end, {
+    force = true,
+  })
 end
 
 function Query:new(opts)
@@ -66,7 +58,6 @@ function Query:nodes()
 
   for _, match, metadata in self.query:iter_matches(self.root, self.bufnr, 0, -1) do
     if metadata.directive == "make-range!" then
-      -- print("Query:nodes make-range! metadata:", vim.inspect(metadata))
       local node = Node:new({ range = metadata.range, bufnr = self.bufnr, name = metadata.capture_name })
 
       table.insert(nodes, node)
@@ -85,8 +76,6 @@ function Query:nodes()
           name = name,
           range = { start_row, start_col, end_row, end_col },
         })
-
-        logger:debug("Query:nodes node:", vim.inspect(node))
 
         table.insert(nodes, node)
       end

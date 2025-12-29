@@ -1,5 +1,3 @@
-local Enumerable = require("telekinesis.lib.enumerable")
-local Cursor = require("polykinesis.cursor")
 local logger = require("telekinesis"):logger()
 
 local Node = {}
@@ -142,8 +140,8 @@ function Node:content()
   return self.range:content()
 end
 
-function Node:select()
-  self.range:select()
+function Node:select(opts)
+  return self.range:select(opts)
 end
 
 function Node:size()
@@ -162,7 +160,7 @@ function Node:_goto()
 end
 
 function Node:to_cursor()
-  return Cursor:new({
+  return require("polykinesis.cursor"):new({
     bufnr = self.bufnr,
     row = self.start_row,
     col = self.start_col,

@@ -119,7 +119,8 @@ function Range:content()
 end
 
 function Range:lines()
-  local lines = vim.api.nvim_buf_get_text(self.bufnr, self.start_row, self.start_col, self.end_row, self.end_col, {})
+  local lines =
+    vim.api.nvim_buf_get_text(self.bufnr, self.start_row, self.start_col, self.end_row, self.end_col, {})
 
   return lines
 end
@@ -143,13 +144,21 @@ function Range:foreach_line(func)
   return Enumerable:new(result)
 end
 
-function Range:select()
+function Range:select(opts)
+  opts = opts or {
+    expr = false,
+  }
+
   vim.fn.setpos("'<", { self.bufnr, self.start_row + 1, self.start_col + 1, 0 })
   vim.fn.setpos("'>", { self.bufnr, self.end_row + 1, self.end_col, 0 })
 
   -- `o` to set the cursor to the start of the selection, as this likely keeps
   -- the viewport more stable in most cases
-  vim.cmd("normal! gvo")
+  if opts.expr then
+    return "gv"
+  else
+    return vim.cmd("normal! gvo")
+  end
 end
 
 function Range:_goto_start()
