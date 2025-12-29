@@ -62,7 +62,7 @@ function Range:distance(row, col)
   -- Take perceived distance into account. A character on the same line _feels_ closer.
   local col_distance = math.abs(col - self.start_col) / 4
 
-  return math.sqrt(row_distance ^ 2 + col_distance ^ 2)
+  return row_distance, col_distance
 end
 
 function Range:is_visible(topline, botline)

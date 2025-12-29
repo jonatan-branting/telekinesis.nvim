@@ -27,7 +27,9 @@ function Picker:render_labels(opts)
     :each(function(group)
       group
         :sort(function(node)
-          return node:distance_to_cursor()
+          local rows, cols = node:distance_to_cursor()
+
+          return rows * 10000 + cols
         end)
         :each(function(node, i)
           if labels[i] == nil then
@@ -38,11 +40,9 @@ function Picker:render_labels(opts)
         end)
     end)
 
-  local candidates = self.nodes
-    :dup()
-    :filter(function(node)
-      return node.label ~= ""
-    end)
+  local candidates = self.nodes:dup():filter(function(node)
+    return node.label ~= ""
+  end)
 
   local label = ""
 

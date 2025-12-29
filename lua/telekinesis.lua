@@ -44,12 +44,14 @@ function Telekinesis:new(opts)
   return instance
 end
 
-function Telekinesis:select_nearest(capture_group)
+function Telekinesis:select_nearest(capture_groups)
   local Node = require("telekinesis.node")
 
-  Node.find_all({ capture_group }, { winid = 0 })
+  Node.find_all(capture_groups, { winid = 0 })
     :sort(function(node)
-      return node:distance_to_cursor()
+      local rows, cols = node:distance_to_cursor()
+
+      return rows * 10000 + cols
     end)
     :maybe(function(nodes)
       return nodes:to_table()[1]
@@ -57,11 +59,14 @@ function Telekinesis:select_nearest(capture_group)
     :_then(function(node)
       node:select()
 
-      self.last_capture_group = capture_group
+      self.last_capture_group = capture_groups
       self.last_node = node
     end)
     :_else(function()
-      vim.notify("No node found for capture group: " .. capture_group, vim.log.levels.WARN)
+      vim.notify(
+        "No node found for capture group: " .. table.concat(capture_groups, ", "),
+        vim.log.levels.WARN
+      )
     end)
 end
 
@@ -72,6 +77,10 @@ function Telekinesis:select_remote(capture_groups)
   local pending_input = ""
   local macro_is_recording = vim.fn.reg_recording() ~= ""
   local macro_is_executing = vim.fn.reg_executing() ~= ""
+
+  if vim.fn.getchar(1) ~= 0 then
+    return self:select_nearest(self.last_capture_group)
+  end
 
   if not macro_is_recording and not macro_is_executing then
     while vim.fn.getchar(1) ~= 0 do
