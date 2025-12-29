@@ -1,9 +1,9 @@
 local foo = "bar"
 
-local function hello(arg)
+local hello = function(arg)
   print(foo, arg)
   print(foo, arg)
-  print('Hello, world!', arg)
+  print("Hello, world!", arg)
   print(foo, arg)
   print(foo, arg)
 end

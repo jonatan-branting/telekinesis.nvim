@@ -44,7 +44,28 @@ function Telekinesis:new(opts)
   return instance
 end
 
-function Telekinesis:select(capture_groups)
+function Telekinesis:select_nearest(capture_group)
+  local Node = require("telekinesis.node")
+
+  Node.find_all({ capture_group }, { winid = 0 })
+    :sort(function(node)
+      return node:distance_to_cursor()
+    end)
+    :maybe(function(nodes)
+      return nodes:to_table()[1]
+    end)
+    :_then(function(node)
+      node:select()
+
+      self.last_capture_group = capture_group
+      self.last_node = node
+    end)
+    :_else(function()
+      vim.notify("No node found for capture group: " .. capture_group, vim.log.levels.WARN)
+    end)
+end
+
+function Telekinesis:select_remote(capture_groups)
   local Node = require("telekinesis.node")
   local Picker = require("telekinesis.picker")
 
@@ -124,7 +145,7 @@ function Telekinesis:await_select_inner()
     ["o"] = "constant",
   }
 
-  self:select(mapping)
+  self:select_remote(mapping)
 end
 
 function Telekinesis:await_select_outer()
@@ -138,7 +159,7 @@ function Telekinesis:await_select_outer()
     ["o"] = "constant",
   }
 
-  self:select(mapping)
+  self:select_remote(mapping)
 end
 
 function Telekinesis:await_goto_remote()

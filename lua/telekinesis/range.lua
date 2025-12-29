@@ -41,10 +41,10 @@ function Range:get_coords()
   })
 
   return {
-    math.min(extmark[1], extmark[3].end_row),
-    math.min(extmark[2], extmark[3].end_col),
-    math.max(extmark[1], extmark[3].end_row),
-    math.max(extmark[2], extmark[3].end_col),
+    extmark[1],
+    extmark[2],
+    extmark[3].end_row,
+    extmark[3].end_col,
   }
 end
 
