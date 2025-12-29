@@ -6,6 +6,7 @@ local Telekinesis = {}
 
 _G.Telekinesis_occurrence_operator = function(type)
   local instance = Telekinesis.instance()
+  vim.fn.winrestview(instance.occurrence_operator_opts.view)
 
   local Node = require("telekinesis.node")
   local Cursor = require("telekinesis.cursor")
@@ -13,7 +14,7 @@ _G.Telekinesis_occurrence_operator = function(type)
   local captures = { instance.occurrence_operator_opts.node_name, }
   instance.occurrence_operator_opts.node:to_cursor():goto()
 
-  require("telekinesis.polykinesis").instance():clear_buffer()
+  require("polykinesis").instance():clear_buffer()
 
   Node
     .find_all_in_selection(captures, { winid = 0 })
@@ -27,7 +28,7 @@ _G.Telekinesis_occurrence_operator = function(type)
       return Cursor:new({ row = node.start_row, col = node.start_col, bufnr = node.bufnr})
     end)
     :each(function(cursor)
-      require("telekinesis.polykinesis").instance():add_cursor(cursor)
+      require("polykinesis").instance():add_cursor(cursor)
     end)
 
   utils.abort_operation()
@@ -61,10 +62,7 @@ function Telekinesis.setup(opts)
     opts or {}
   )
 
-  local Polykinesis = require("telekinesis.polykinesis")
-
   _G.telekinesis_instance = Telekinesis:new(opts)
-  _G.polykinesis_instance = Polykinesis:new(opts)
 
   vim.cmd([[hi! link TelekinesisLabel Cursor]])
 
@@ -325,6 +323,7 @@ function Telekinesis:await_select_occurrences()
     node = node,
     node_name = node.name,
     node_content = node:content(),
+    view = vim.fn.winsaveview(),
   }
 
   vim.go.operatorfunc = "v:lua.Telekinesis_occurrence_operator"
@@ -411,7 +410,7 @@ _G.Telekinesis_match_operator = function(type)
   for i = 2, #selections do
     local cursor = selections[i]:to_cursor()
 
-    require("telekinesis.polykinesis").instance():add_cursor(cursor)
+    require("polykinesis").instance():add_cursor(cursor)
   end
 
   utils.abort_operation()

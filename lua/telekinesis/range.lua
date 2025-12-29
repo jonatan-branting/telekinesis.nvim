@@ -10,7 +10,7 @@ function Range:new(coords, bufnr)
 
   local instance = {
     extmark_id = nil,
-    ns_id = vim.api.nvim_create_namespace("PolykinesisRangeNamespace"),
+    ns_id = vim.api.nvim_create_namespace("TelekinesisRangeNamespace"),
     __type = "Range",
   }
 
