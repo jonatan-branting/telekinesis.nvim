@@ -152,7 +152,7 @@ function Telekinesis:await_goto_remote()
   self:_goto(mapping)
 end
 
-function Telekinesis:await_select_prev()
+function Telekinesis:select_prev()
   assert(self.last_node, "No `last_node` recorded yet")
 
   local Node = require("telekinesis.node")
@@ -174,7 +174,7 @@ function Telekinesis:await_select_prev()
     end)
 end
 
-function Telekinesis:await_select_next()
+function Telekinesis:select_next()
   assert(self.last_node, "No `last_node` recorded yet")
 
   local Node = require("telekinesis.node")
@@ -195,7 +195,7 @@ function Telekinesis:await_select_next()
     end)
 end
 
-function Telekinesis:await_goto_next()
+function Telekinesis:goto_next()
   assert(self.last_node, "No `last_node` recorded yet")
 
   local Node = require("telekinesis.node")
@@ -219,7 +219,7 @@ function Telekinesis:await_goto_next()
     end)
 end
 
-function Telekinesis:await_goto_prev()
+function Telekinesis:goto_prev()
   assert(self.last_node, "No `last_node` recorded yet")
 
   local Node = require("telekinesis.node")
