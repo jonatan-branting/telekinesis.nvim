@@ -44,6 +44,12 @@ function Telekinesis:new(opts)
   return instance
 end
 
+function Telekinesis:select_last_nearest()
+  assert(#self.last_capture_group > 0, "No `last_capture_group` recorded yet")
+
+  self:select_nearest(self.last_capture_group)
+end
+
 function Telekinesis:select_nearest(capture_groups)
   local Node = require("telekinesis.node")
 
